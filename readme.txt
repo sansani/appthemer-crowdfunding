@@ -36,7 +36,7 @@ Features of the plugin include:
 
 **COMPATIBLE THEMES**
 
-The first compatible theme that has been released is called "Fundify" from [AppThemer](https://AppThemer.com).
+The first compatible theme that has been released is called "Fundify" from [AppThemer](http://AppThemer.com).
 
 == Languages ==
 
