@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      AppThemer
  * Author URI:  http://appthemer.com
- * Version:     0.1-alpha
+ * Version:     0.2-alpha
  * Text Domain: atcf
  */
 
@@ -98,6 +98,7 @@ final class AT_CrowdFunding {
 		require( $this->includes_dir . 'shortcode-submit.php' );
 		require( $this->includes_dir . 'shipping.php' );
 		require( $this->includes_dir . 'logs.php' );
+		require( $this->includes_dir . 'export.php' );
 
 		do_action( 'atcf_include_files' );
 
@@ -115,16 +116,59 @@ final class AT_CrowdFunding {
 	 * @return void
 	 */
 	private function setup_actions() {
+		add_action( 'init', array( $this, 'is_edd_activated' ), 1 );
+
 		add_filter( 'template_include', array( $this, 'template_loader' ) );
-		add_action( 'init', array( $this, 'export' ) );
+		add_action( 'init', array( $this, 'endpoints' ) );
 		
 		do_action( 'atcf_setup_actions' );
 
 		$this->load_textdomain();
 	}
 
-	function export() {
-		require( $this->includes_dir . 'export.php' );
+	
+	/**
+	 * Easy Digital Downloads
+	 *
+	 * @return void
+	 */
+	function is_edd_activated() {
+		if ( ! class_exists( 'Easy_Digital_Downloads' ) ) {
+			if ( is_plugin_active( $this->basename ) ) {
+				deactivate_plugins( $this->basename );
+				unset ($_GET[ 'activate' ] ); // Ghetto
+
+				add_action( 'admin_notices', array( $this, 'edd_notice' ) );
+			}
+		}
+	}
+
+	/**
+	 * Admin notice.
+	 *
+	 * @return	string
+	 */
+	function edd_notice() {
+?>
+		<div class="updated">
+			<p><?php printf( 
+						__( '<strong>Notice:</strong> Crowdfunding by AppThemer requires <a href="%s">Easy Digital Downloads</a> in order to function properly.', 'atcf' ), 
+						wp_nonce_url( network_admin_url( 'update.php?action=install-plugin&plugin=easy-digital-downloads' ), 'install-plugin_easy-digital-downloads' )
+				); ?></p>
+		</div>
+<?php
+	}
+
+	/**
+	 * Add Endpoint for backers. This allows us to monitor
+	 * the query to create "fake" URLs for seeing backers.
+	 *
+	 * @since AT_CrowdFunding 0.1-alpha
+	 *
+	 * @return void
+	 */
+	function endpoints() {
+		add_rewrite_endpoint( 'backers', EP_PERMALINK | EP_PAGES );
 	}
 
 	/**
@@ -147,9 +191,9 @@ final class AT_CrowdFunding {
 		$find = array();
 		$file = '';
 
-		if ( isset( $wp_query->query[ 'backers' ] ) && is_singular( 'download' ) ) {
+		if ( isset ( $wp_query->query_vars[ 'backers' ] ) && is_singular( 'download' ) ) {
 			$file   = 'single-campaign-backers.php';
-		} else if ( is_single() && get_post_type() == 'download' ) {
+		} else if ( is_singular( 'download' ) ) {
 			$file 	= 'single-campaign.php';
 		} else if ( is_post_type_archive( 'download' ) ) {
 			$file   = 'archive-campaigns.php';

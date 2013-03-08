@@ -136,7 +136,7 @@ function atcf_shipping_validate_meta( $valid_data, $data ) {
 	}
 
 	if ( ! edd_purchase_form_validate_cc_zip( $shipping_info[ 'shipping_zip' ], $shipping_info[ 'shipping_country' ] ) )
-		edd_set_error( 'invalid_cc_zip', __( 'The zip code you entered for your shipping address is invalid.', 'atcf' ) );
+		edd_set_error( 'invalid_shipping_zip', __( 'The zip code you entered for your shipping address is invalid.', 'atcf' ) );
 }
 add_action( 'edd_checkout_error_checks', 'atcf_shipping_validate_meta', 10, 2);
 
@@ -153,6 +153,7 @@ function atcf_shipping_save_meta( $payment_meta ) {
 	$payment_meta[ 'shipping' ][ 'shipping_address_2' ] = isset( $_POST[ 'shipping_address_2' ] ) ? sanitize_text_field( $_POST[ 'shipping_address_2' ] ) : '';
 	$payment_meta[ 'shipping' ][ 'shipping_city' ]      = isset( $_POST[ 'shipping_city' ] )      ? sanitize_text_field( $_POST[ 'shipping_city' ] )      : '';
 	$payment_meta[ 'shipping' ][ 'shipping_country' ]   = isset( $_POST[ 'shipping_country' ] )   ? sanitize_text_field( $_POST[ 'shipping_country' ] )   : '';
+	$payment_meta[ 'shipping' ][ 'shipping_state' ]     = isset( $_POST[ 'shipping_state' ] )     ? sanitize_text_field( $_POST[ 'shipping_state' ] )     : '';
 	$payment_meta[ 'shipping' ][ 'shipping_zip' ]       = isset( $_POST[ 'shipping_zip' ] )	      ? sanitize_text_field( $_POST[ 'shipping_zip' ] )       : '';
 
 	return $payment_meta;
@@ -171,11 +172,11 @@ function atcf_payment_view_details( $payment_meta ) {
 	if ( ! isset ( $payment_meta[ 'shipping' ] ) )
 		return;
 
-	$shipping     = $payment_meta[ 'shipping' ];
+	$shipping = $payment_meta[ 'shipping' ];
 ?>
 	<li>
 		<?php echo $shipping[ 'shipping_address' ]; ?><br />
-		<?php echo $shipping[ 'shipping_address_2' ]; ?><br />
+		<?php echo isset ( $shipping[ 'shipping_address_2' ] ) ? $shipping[ 'shipping_address_2' ] : ''; ?><br />
 		<?php echo $shipping[ 'shipping_city' ]; ?>, <?php echo $shipping[ 'shipping_state' ]; ?> <?php echo $shipping[ 'shipping_zip' ]; ?><br />
 		<?php echo $shipping[ 'shipping_country' ]; ?>
 	</li>

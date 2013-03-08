@@ -6,7 +6,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: download, downloads, e-store, eshop, digital downloads, crowd funding, crowdfunding, crowdsource, 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 0.1
+Stable Tag: 0.2
 
 License: GNU Version 2 or Any Later Version
 
@@ -32,11 +32,11 @@ Features of the plugin include:
 
 **GET INVOLVED**
 
-**Developers can contribute to the source code of the project on [Git Hub](https://github.com/spencerfinnell/crowdfunding/)**
+**Developers can contribute to the source code of the project on [GitHub](https://github.com/spencerfinnell/crowdfunding/)**
 
 **COMPATIBLE THEMES**
 
-The first compatible theme that has been released is called "Fundify" from [AppThemer](https://AppThemer.com)
+The first compatible theme that has been released is called "Fundify" from [AppThemer](https://AppThemer.com).
 
 == Languages ==
 
@@ -69,12 +69,22 @@ Not currently at this time. However, it is very easy to integrate with a theme. 
 
 == Changelog ==
 
-= 1.0 =
+= 0.2-alpha: March 7, 2013 =
 
-* First offical release!
+* Fix: Better loading of exports. 
+* Fix: Shipping fixes, backers, etc.
+* Fix: Load backers at the correct time.
+* Fix: Count amount based on preapproval, not total earnings. 
+* New: Dont activate if EDD is not active.
+* New: Text filters.
+* New: Update readme.txt
+
+= 0.1-alpha: March 6, 2013 =
+
+* First official alpha release!
 
 == Upgrade Notice ==
 
-= 1.0 =
+= 0.2-alpha =
 
-* First offical release!
+* A ton of bug fixes and improvments in this release.

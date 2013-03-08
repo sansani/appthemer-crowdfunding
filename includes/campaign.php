@@ -46,8 +46,6 @@ class ATCF_Campaigns {
 		
 		remove_action( 'edd_purchase_link_top', 'edd_purchase_variable_pricing' );
 
-		add_action( 'init', array( $this, 'endpoints' ) );
-
 		add_filter( 'edd_download_labels', array( $this, 'download_labels' ) );
 		add_filter( 'edd_default_downloads_name', array( $this, 'download_names' ) );
 		add_filter( 'edd_download_supports', array( $this, 'download_supports' ) );
@@ -58,6 +56,7 @@ class ATCF_Campaigns {
 			return;
 
 		add_filter( 'manage_edit-download_columns', array( $this, 'dashboard_columns' ), 11, 1 );
+		add_filter( 'manage_download_posts_custom_column', array( $this, 'dashboard_column_item' ), 11, 2 );
 		
 		add_action( 'add_meta_boxes', array( $this, 'remove_meta_boxes' ), 11 );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
@@ -69,18 +68,6 @@ class ATCF_Campaigns {
 		add_filter( 'post_updated_messages', array( $this, 'messages' ) );
 
 		do_action( 'atcf_campaigns_actions_admin' );
-	}
-
-	/**
-	 * Add Endpoint for backers. This allows us to monitor
-	 * the query to create "fake" URLs for seeing backers.
-	 *
-	 * @since AT_CrowdFunding 0.1-alpha
-	 *
-	 * @return void
-	 */
-	function endpoints() {
-		add_rewrite_endpoint( 'backers', EP_ALL );
 	}
 
 	/**
@@ -160,11 +147,33 @@ class ATCF_Campaigns {
 			'cb'                => '<input type="checkbox"/>',
 			'title'             => __( 'Name', 'atcf' ),
 			'download_category' => __( 'Categories', 'atcf' ),
-			'earnings'          => __( 'Amount Funded', 'atcf' ),
+			'funded'            => __( 'Amount Funded', 'atcf' ),
 			'date'              => __( 'Expires', 'atcf' )
 		);
 
 		return $columns;
+	}
+
+	/**
+	 * Download Column Items
+	 *
+	 * @since AT_CrowdFunding 0.1-alpha
+	 *
+	 * @param array $supports The post type supports
+	 * @return array $supports The modified post type supports
+	 */
+	function dashboard_column_item( $column, $post_id ) {
+		$campaign = atcf_get_campaign( $post_id );
+
+		switch ( $column ) {
+			case 'funded' :
+				$funded = $campaign->current_amount(true);
+
+				echo $funded;
+				break;
+			default : 
+				break;
+		}
 	}
 
 	/**
@@ -337,6 +346,7 @@ class ATCF_Campaigns {
 		if ( is_wp_error( $errors ) )
 			wp_die( $errors->get_error_messages() );
 		else {
+			update_post_meta( $this->ID, '_campaign_expired', 1 );
 			return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit', 'message' => 13, 'collected' => $num_collected ), admin_url( 'post.php' ) ) );
 			exit();
 		}
@@ -742,7 +752,7 @@ class ATCF_Campaign {
 		if ( ! $backers )
 			return 0;
 
-		return count( $backers );
+		return absint( count( $backers ) );
 	}
 
 	/**
@@ -772,7 +782,7 @@ class ATCF_Campaign {
 				$price_id = $item[ 'item_number' ][ 'options' ][ 'price_id' ];
 
 				if ( ! isset( $totals[$price_id] ) )
-					$totals[$price_id] = 1;
+					$totals[$price_id] = isset ( $totals[$price_id] ) ? $totals[$price_id] : 0;
 				else
 					$totals[$price_id] = $totals[$price_id] + 1;
 			}
@@ -842,7 +852,16 @@ class ATCF_Campaign {
 	 * @return sting $total The amount funded (currency formatted or not)
 	 */
 	public function current_amount( $formatted = true ) {
-		$total = edd_get_download_earnings_stats( $this->ID );
+		$total   = 0;
+		$backers = $this->backers();
+
+		if ( 0 == $backers )
+			$backers = array();
+
+		foreach ( $backers as $backer ) {
+			$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
+			$total      = $total + edd_get_payment_amount( $payment_id );
+		}
 		
 		if ( $formatted )
 			return edd_currency_filter( edd_format_amount( $total ) );
@@ -1076,3 +1095,29 @@ function atcf_shortcode_submit_process() {
 	exit();
 }
 add_action( 'template_redirect', 'atcf_shortcode_submit_process' );
+
+/**
+ * Price Options Heading
+ *
+ * @since AT_CrowdFunding 0.1-alpha
+ *
+ * @param string $heading Price options heading
+ * @return string Modified price options heading
+ */
+function atcf_edd_price_options_heading( $heading ) {
+	return __( 'Reward Options:', 'atcf' );
+}
+add_filter( 'edd_price_options_heading', 'atcf_edd_price_options_heading' );
+
+/**
+ * Reward toggle text
+ *
+ * @since AT_CrowdFunding 0.1-alpha
+ *
+ * @param string $heading Reward toggle text
+ * @return string Modified reward toggle text
+ */
+function atcf_edd_variable_pricing_toggle_text( $text ) {
+	return __( 'Enable multiple reward options', 'atcf' );
+}
+add_filter( 'edd_variable_pricing_toggle_text', 'atcf_edd_variable_pricing_toggle_text' );
