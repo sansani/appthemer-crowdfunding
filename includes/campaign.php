@@ -8,7 +8,7 @@
  * ATCF_Campaigns - Mostly admin things, and changing some settings of EDD
  * ATCF_Campaign  - A singular campaign. Includes getter methods for accessing a single campaign's info
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  */
 
 // Exit if accessed directly
@@ -17,14 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /** Global Campaigns *******************************************************/
 
 /** Start me up! */
-$cf_campaigns = new ATCF_Campaigns;
+$atcf_campaigns = new ATCF_Campaigns;
 
 class ATCF_Campaigns {
 
 	/**
 	 * Start things up.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -37,15 +37,13 @@ class ATCF_Campaigns {
 	 *
 	 * Set the archive slug, and remove formatting from prices.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
 	function setup() {
 		define( 'EDD_SLUG', apply_filters( 'atcf_edd_slug', 'campaigns' ) );
 		
-		remove_action( 'edd_purchase_link_top', 'edd_purchase_variable_pricing' );
-
 		add_filter( 'edd_download_labels', array( $this, 'download_labels' ) );
 		add_filter( 'edd_default_downloads_name', array( $this, 'download_names' ) );
 		add_filter( 'edd_download_supports', array( $this, 'download_supports' ) );
@@ -73,7 +71,7 @@ class ATCF_Campaigns {
 	/**
 	 * Download labels. Change it to "Campaigns".
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $labels The preset labels
 	 * @return array $labels The modified labels
@@ -101,7 +99,7 @@ class ATCF_Campaigns {
 	/**
 	 * Further change "Download" & "Downloads" to "Campaign" and "Campaigns"
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $labels The preset labels
 	 * @return array $labels The modified labels
@@ -120,7 +118,7 @@ class ATCF_Campaigns {
 	/**
 	 * Add excerpt support for downloads.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $supports The post type supports
 	 * @return array $supports The modified post type supports
@@ -137,7 +135,7 @@ class ATCF_Campaigns {
 	 *
 	 * Add "Amount Funded" and "Expires" to the main campaign table listing. 
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $supports The post type supports
 	 * @return array $supports The modified post type supports
@@ -157,7 +155,7 @@ class ATCF_Campaigns {
 	/**
 	 * Download Column Items
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $supports The post type supports
 	 * @return array $supports The modified post type supports
@@ -180,7 +178,7 @@ class ATCF_Campaigns {
 	 * Remove some metaboxes that we don't need to worry about. Sales
 	 * and download stats, aren't really important. 
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -206,7 +204,7 @@ class ATCF_Campaigns {
 	 * As well as some other information plugged into EDD in the Download Configuration
 	 * metabox that already exists.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -215,8 +213,8 @@ class ATCF_Campaigns {
 
 		$campaign = new ATCF_Campaign( $post );
 
-		if ( $campaign->is_funded() && class_exists( 'PayPalAdaptivePaymentsGateway' ) )
-			add_meta_box( 'cf_campaign_funds', __( 'Campaign Funds', 'atcf' ), '_atcf_metabox_campaign_funds', 'download', 'side', 'high' );
+		if ( $campaign->is_funded() && ! $campaign->is_collected() && class_exists( 'PayPalAdaptivePaymentsGateway' ) )
+			add_meta_box( 'atcf_campaign_funds', __( 'Campaign Funds', 'atcf' ), '_atcf_metabox_campaign_funds', 'download', 'side', 'high' );
 
 		add_meta_box( 'atcf_campaign_stats', __( 'Campaign Stats', 'atcf' ), '_atcf_metabox_campaign_stats', 'download', 'side', 'high' );
 		add_meta_box( 'atcf_campaign_video', __( 'Campaign Video', 'atcf' ), '_atcf_metabox_campaign_video', 'download', 'normal', 'high' );
@@ -230,7 +228,7 @@ class ATCF_Campaigns {
 	 * Hook in to EDD and add a few more things that will be saved. Use
 	 * this so we are already cleared/validated.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $fields An array of fields to save
 	 * @return array $fields An updated array of fields to save
@@ -250,7 +248,7 @@ class ATCF_Campaigns {
 	/**
 	 * Collect Funds
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -287,7 +285,7 @@ class ATCF_Campaigns {
 		$paypal_adaptive = new PayPalAdaptivePaymentsGateway();
 		$payments        = $campaign->backers();
 		$num_collected   = 0;
-		$errors          = null;
+		$errors          = new WP_Error();
 
 		$owner           = $edd_options[ 'epap_receivers' ];
 		$owner           = explode( '|', $owner );
@@ -299,26 +297,26 @@ class ATCF_Campaigns {
 
 		$receivers       = array(
 			array(
-				'email'  => trim( $campaign_email ),
-				'amount' => absint( $campaign_amount )
+				trim( $campaign_email ),
+				absint( $campaign_amount )
 			),
 			array(
-				'email'  => trim( $owner_email ),
-				'amount' => absint( $owner_amount )
+				trim( $owner_email ),
+				absint( $owner_amount )
 			)
 		);
 
 		foreach ( $payments as $payment ) {
-			$payment_id      = $payment->ID;
+			$payment_id      = get_post_meta( $payment->ID, '_edd_log_payment_id', true );
 
 			$sender_email    = get_post_meta( $payment_id, '_edd_epap_sender_email', true );
-			$amount          = get_post_meta( $payment_id, '_edd_epap_sender_amount', true );
-			$paid            = get_post_meta( $payment_id, '_edd_epap_sender_paid', true );
+			$amount          = get_post_meta( $payment_id, '_edd_epap_amount', true );
+			$paid            = get_post_meta( $payment_id, '_edd_epap_paid', true );
 			$preapproval_key = get_post_meta( $payment_id, '_edd_epap_preapproval_key', true );
-		
+
 			/** Already paid or other error */
-			if ( $amount > $paid ) {
-				$errors = new WP_Error( 'already-paid-' . $payment_id, __( 'This payment has already been collected.', 'atcf' ) );
+			if ( $paid > $amount ) {
+				$errors->add( 'already-paid-' . $payment_id, __( 'This payment has already been collected.', 'atcf' ) );
 				
 				continue;
 			}
@@ -329,24 +327,33 @@ class ATCF_Campaigns {
 				if ( $responsecode == 'SUCCESS' || $responsecode == 'SUCCESSWITHWARNING' ) {
 					$pay_key = $payment[ 'payKey' ];
 					
-					add_post_meta( $_GET[ 'payment_id'], '_edd_epap_pay_key', $pay_key );
-					add_post_meta( $_GET[ 'payment_id'], '_edd_epap_preapproval_paid', true );
+					add_post_meta( $payment_id, '_edd_epap_pay_key', $pay_key );
+					add_post_meta( $payment_id, '_edd_epap_preapproval_paid', true );
 
 					$num_collected = $num_collected + 1;
 					
-					edd_update_payment_status( $_GET['payment_id'], 'publish' );
+					edd_update_payment_status( $payment_id, 'publish' );
 				} else {
-					$errors = new WP_Error( 'invalid-response-' . $payment_id, __( 'There was an error collecting funds.', 'atcf' ), $payment );
+					$errors->add( 
+						'invalid-response-' . $payment_id, 
+						sprintf( 
+							__( 'There was an error collecting funds for payment <a href="%1$s">#%2$d</a>. PayPal responded with %3$s', 'atcf' ), 
+							admin_url( 'edit.php?post_type=download&page=edd-payment-history&edd-action=edit-payment&purchase_id=' . $payment_id ), 
+							$payment_id, 
+							'<pre style="max-width: 100%; overflow: scroll; height: 200px;">' . print_r( array_merge( $payment,  compact( 'payment_id', 'preapproval_key', 'sender_email', 'amount', 'receivers' ) ), true ) . '</pre>'
+						)
+					);
 				}
 			} else {
-				$errors = new WP_Error( 'payment-error-' . $payment_id, __( 'There was an error.', 'atcf' ) );
+				$errors->add( 'payment-error-' . $payment_id, __( 'There was an error.', 'atcf' ) );
 			}
 		}
 
-		if ( is_wp_error( $errors ) )
-			wp_die( $errors->get_error_messages() );
+		if ( ! empty ( $errors->errors ) ) // Not sure how to avoid empty instantiated WP_Error
+			wp_die( $errors );
 		else {
 			update_post_meta( $this->ID, '_campaign_expired', 1 );
+			update_post_meta( $this->ID, '_campaign_bulk_collected', 1 );
 			return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit', 'message' => 13, 'collected' => $num_collected ), admin_url( 'post.php' ) ) );
 			exit();
 		}
@@ -355,7 +362,7 @@ class ATCF_Campaigns {
 	/**
 	 * Custom messages for various actions when managing campaigns.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param array $messages An array of messages to display
 	 * @return array $messages An updated array of messages to display
@@ -363,7 +370,7 @@ class ATCF_Campaigns {
 	function messages( $messages ) {
 		$messages[ 'download' ][11] = sprintf( __( 'This %s has not reached its funding goal.', 'atcf' ), strtolower( edd_get_label_singular() ) );
 		$messages[ 'download' ][12] = sprintf( __( 'You do not have permission to collect funds for %s.', 'atcf' ), strtolower( edd_get_label_plural() ) );
-		$messages[ 'download' ][13] = sprintf( __( '%d payments have been collected for this %s.', 'atcf' ), isset ( $_GET[ 'collected' ] ) ? $_GET[ 'collected' ] : 0, strtolower( edd_get_label_plural() ) );
+		$messages[ 'download' ][13] = sprintf( __( '%d payments have been collected for this %s.', 'atcf' ), isset ( $_GET[ 'collected' ] ) ? $_GET[ 'collected' ] : 0, strtolower( edd_get_label_singular() ) );
 
 		return $messages;
 	}
@@ -375,7 +382,7 @@ class ATCF_Campaigns {
  * A hidden/fake input field so the filter is triggered, then
  * add all the other date fields together to create the MySQL date.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @param string $date
  * @return string $end_date Formatted date
@@ -418,7 +425,7 @@ function atcf_campaign_save_end_date( $new ) {
  *
  * These are read-only stats/info for the current campaign.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return void
  */
@@ -453,7 +460,7 @@ function _atcf_metabox_campaign_stats() {
  * If a campaign is fully funded (or expired and fully funded) show this box.
  * Includes a button to collect funds.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return void
  */
@@ -481,7 +488,7 @@ function _atcf_metabox_campaign_funds() {
  *
  * oEmbed campaign video.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return void
  */
@@ -505,7 +512,7 @@ function _atcf_metabox_campaign_video() {
  * These are all things that can be updated while the campaign runs/before
  * being published.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return void
  */
@@ -588,7 +595,7 @@ function _atcf_metabox_campaign_info() {
  *
  * Sanitize goal before it is saved, to remove commas.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return string $price The formatted price
  */
@@ -620,7 +627,7 @@ class ATCF_Campaign {
 	/**
 	 * Getter
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param string $key The meta key to fetch
 	 * @return string $meta The fetched value
@@ -634,7 +641,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Featured
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign Featured
 	 */
@@ -645,7 +652,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Goal
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param boolean $formatted Return formatted currency or not
 	 * @return sting $goal A goal amount (formatted or not)
@@ -665,7 +672,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Location
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign Location
 	 */
@@ -676,7 +683,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Author
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign Author
 	 */
@@ -687,7 +694,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign PayPal Email
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign PayPal Email
 	 */
@@ -698,7 +705,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign End Date
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign End Date
 	 */
@@ -709,7 +716,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Video
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign Video
 	 */
@@ -723,7 +730,7 @@ class ATCF_Campaign {
 	 * Use EDD logs to get all sales. This includes both preapproved
 	 * payments (if they have Plugin installed) or standard payments.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return sting Campaign Backers
 	 */
@@ -732,7 +739,7 @@ class ATCF_Campaign {
 
 		$backers = $edd_logs->get_connected_logs( array(
 			'post_parent' => $this->ID, 
-			'log_type'    => 'preapproval',
+			'log_type'    => class_exists( 'PayPalAdaptivePaymentsGateway' ) ? 'preapproval' : 'sale',
 			'post_status' => array( 'publish' )
 		) );
 
@@ -742,7 +749,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Backers Count
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return int Campaign Backers Count
 	 */
@@ -762,7 +769,7 @@ class ATCF_Campaign {
 	 * a counter for each price point, so they can be displayed elsewhere. 
 	 * Not 100% because keys can change in EDD, but it's the best way I think.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return array $totals The number of backers for each price point
 	 */
@@ -796,7 +803,7 @@ class ATCF_Campaign {
 	 *
 	 * Calculate the end date, minus today's date, and output a number.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return int The number of days remaining
 	 */
@@ -822,7 +829,7 @@ class ATCF_Campaign {
 	 *
 	 * MATH!
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param boolean $formatted Return formatted currency or not
 	 * @return sting $percent The percent completed (formatted with a % or not)
@@ -846,7 +853,7 @@ class ATCF_Campaign {
 	/**
 	 * Current amount funded.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @param boolean $formatted Return formatted currency or not
 	 * @return sting $total The amount funded (currency formatted or not)
@@ -856,10 +863,15 @@ class ATCF_Campaign {
 		$backers = $this->backers();
 
 		if ( 0 == $backers )
-			$backers = array();
+			return $formatted ? edd_currency_filter( edd_format_amount( 0 ) ) : 0;
 
 		foreach ( $backers as $backer ) {
 			$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
+			$payment    = get_post( $payment_id );
+			
+			if ( empty( $payment ) )
+				continue;
+
 			$total      = $total + edd_get_payment_amount( $payment_id );
 		}
 		
@@ -875,10 +887,9 @@ class ATCF_Campaign {
 	 * Check if the campaign has expired based on time, or it has
 	 * manually been expired (via meta)
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
-	 * @param boolean $formatted Return formatted currency or not
-	 * @return sting $percent The percent completed (formatted with a % or not)
+	 * @return boolean
 	 */
 	public function is_active() {
 		$active  = true;
@@ -889,13 +900,30 @@ class ATCF_Campaign {
 		if ( $this->__get( '_campaign_expired' ) )
 			$active = false;
 
+		if ( $this->is_collected() )
+			$active = false;
+
 		return apply_filters( 'atcf_campaign_active', $active, $this );
+	}
+
+	/**
+	 * Funds Collected
+	 *
+	 * When funds are collected in bulk, remember that, so we can end the
+	 * campaign, and not repeat things.
+	 *
+	 * @since Appthemer CrowdFunding 0.3-alpha
+	 *
+	 * @return boolean
+	 */
+	public function is_collected() {
+		return $this->__get( '_campaign_bulk_collected' );
 	}
 
 	/**
 	 * Campaign Funded
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return boolean
 	 */
@@ -918,7 +946,7 @@ function atcf_get_campaign( $campaign ) {
 /**
  * Process shortcode submission.
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return void
  */
@@ -931,15 +959,14 @@ function atcf_shortcode_submit_process() {
 	if ( empty( $_POST['action' ] ) || ( 'atcf-campaign-submit' !== $_POST[ 'action' ] ) )
 		return;
 
-	if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'atcf-campaign-submit' ) )
+	if ( ! wp_verify_nonce( $_POST[ '_wpnonce' ], 'atcf-campaign-submit' ) )
 		return;
 
 	if ( ! function_exists( 'wp_handle_upload' ) ) {
-		require_once( ABSPATH . 'wp-admin/includes/file.php' );
-		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		require_once( ABSPATH . 'wp-admin/includes/admin.php' );
 	}
 
-	$errors           = null;
+	$errors           = new WP_Error();
 	$prices           = array();
 	$edd_files        = array();
 	$upload_overrides = array( 'test_form' => false );
@@ -961,11 +988,11 @@ function atcf_shortcode_submit_process() {
 
 	/** Check Title */
 	if ( empty( $title ) )
-		$errors = new WP_Error( 'invalid-title', __( 'Please add a title to this campaign.', 'atcf' ) );
+		$errors->add( 'invalid-title', __( 'Please add a title to this campaign.', 'atcf' ) );
 
 	/** Check Goal */
 	if ( ! is_numeric( $goal ) )
-		$errors = new WP_Error( 'invalid-goal', sprintf( __( 'Please enter a valid goal amount. All goals are set in the %s currency.', 'atcf' ), $edd_options[ 'currency' ] ) );
+		$errors->add( 'invalid-goal', sprintf( __( 'Please enter a valid goal amount. All goals are set in the %s currency.', 'atcf' ), $edd_options[ 'currency' ] ) );
 
 	/** Check Length */
 	$length = absint( $length );
@@ -984,7 +1011,7 @@ function atcf_shortcode_submit_process() {
 
 	/** Check Content */
 	if ( empty( $content ) )
-		$errors = new WP_Error( 'invalid-content', __( 'Please add content to this campaign.', 'atcf' ) );
+		$errors->add( 'invalid-content', __( 'Please add content to this campaign.', 'atcf' ) );
 
 	/** Check Excerpt */
 	if ( empty( $excerpt ) )
@@ -992,20 +1019,20 @@ function atcf_shortcode_submit_process() {
 
 	/** Check Image */
 	if ( empty( $image ) )
-		$errors = new WP_Error( 'invalid-previews', __( 'Please add a campaign image.', 'atcf' ) );
+		$errors->add( 'invalid-previews', __( 'Please add a campaign image.', 'atcf' ) );
 
 	/** Check Rewards */
 	if ( empty( $rewards ) )
-		$errors = new WP_Error( 'invalid-rewards', __( 'Please add at least one reward to the campaign.', 'atcf' ) );
+		$errors->add( 'invalid-rewards', __( 'Please add at least one reward to the campaign.', 'atcf' ) );
 
 	/** Check Email */
 	if ( ! is_email( $email ) )
-		$errors = new WP_Error( 'invalid-email', __( 'Please provide a valid PayPal email address.', 'atcf' ) );
+		$errors->add( 'invalid-email', __( 'Please provide a valid PayPal email address.', 'atcf' ) );
 
 	do_action( 'atcf_campaign_submit_validate', $_POST, $errors );
 
 	if ( is_wp_error( $errors ) )
-		wp_die( $errors->get_error_message() );
+		wp_die( $errors );
 
 	$args = apply_filters( 'atcf_campaign_submit_data', array(
 		'post_type'    => 'download',
@@ -1099,7 +1126,7 @@ add_action( 'template_redirect', 'atcf_shortcode_submit_process' );
 /**
  * Price Options Heading
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @param string $heading Price options heading
  * @return string Modified price options heading
@@ -1112,7 +1139,7 @@ add_filter( 'edd_price_options_heading', 'atcf_edd_price_options_heading' );
 /**
  * Reward toggle text
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @param string $heading Reward toggle text
  * @return string Modified reward toggle text

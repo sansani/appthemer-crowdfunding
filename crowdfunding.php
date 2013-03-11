@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      AppThemer
  * Author URI:  http://appthemer.com
- * Version:     0.2-alpha
+ * Version:     0.4-alpha
  * Text Domain: atcf
  */
 
@@ -18,9 +18,9 @@ include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 /**
  * Main Crowd Funding Class
  *
- * @since v1.4
+ * @since Appthemer CrowdFunding 0.1-alpha
  */
-final class AT_CrowdFunding {
+final class ATCF_CrowdFunding {
 
 	/**
 	 * @var crowdfunding The one true AT_CrowdFunding
@@ -33,13 +33,13 @@ final class AT_CrowdFunding {
 	 * Ensures that only one instance of Crowd Funding exists in memory at any one
 	 * time. Also prevents needing to define globals all over the place.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return The one true Crowd Funding
 	 */
 	public static function instance() {
 		if ( ! isset ( self::$instance ) ) {
-			self::$instance = new AT_CrowdFunding;
+			self::$instance = new ATCF_CrowdFunding;
 			self::$instance->setup_globals();
 			self::$instance->includes();
 			self::$instance->setup_actions();
@@ -54,14 +54,14 @@ final class AT_CrowdFunding {
 	 * Set some smart defaults to class variables. Allow some of them to be
 	 * filtered to allow for early overriding.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
 	private function setup_globals() {
 		/** Versions **********************************************************/
 
-		$this->version    = '0.1-alpha';
+		$this->version    = '0.3-alpha';
 		$this->db_version = '1';
 
 		/** Paths *************************************************************/
@@ -82,13 +82,13 @@ final class AT_CrowdFunding {
 
 		/** Misc **************************************************************/
 
-		$this->domain       = 'crowdfunding'; 
+		$this->domain       = 'atcf'; 
 	}
 
 	/**
 	 * Include required files.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -111,7 +111,7 @@ final class AT_CrowdFunding {
 	/**
 	 * Setup the default hooks and actions
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -130,6 +130,8 @@ final class AT_CrowdFunding {
 	/**
 	 * Easy Digital Downloads
 	 *
+	 * @since Appthemer CrowdFunding 0.2-alpha
+	 *
 	 * @return void
 	 */
 	function is_edd_activated() {
@@ -146,7 +148,9 @@ final class AT_CrowdFunding {
 	/**
 	 * Admin notice.
 	 *
-	 * @return	string
+	 * @since Appthemer CrowdFunding 0.2-alpha
+	 *
+	 * @return void
 	 */
 	function edd_notice() {
 ?>
@@ -163,7 +167,7 @@ final class AT_CrowdFunding {
 	 * Add Endpoint for backers. This allows us to monitor
 	 * the query to create "fake" URLs for seeing backers.
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -188,21 +192,23 @@ final class AT_CrowdFunding {
 	public function template_loader( $template ) {
 		global $wp_query;
 		
-		$find = array();
-		$file = '';
+		$find  = array();
+		$files = array();
 
 		if ( isset ( $wp_query->query_vars[ 'backers' ] ) && is_singular( 'download' ) ) {
-			$file   = 'single-campaign-backers.php';
+			$files = apply_filters( 'atcf_crowdfunding_templates_backers', array( 'single-campaign-backers.php' ) );
 		} else if ( is_singular( 'download' ) ) {
-			$file 	= 'single-campaign.php';
+			$files = apply_filters( 'atcf_crowdfunding_templates_campaign', array( 'single-campaign.php', 'single-download.php', 'single.php' ) );
 		} else if ( is_post_type_archive( 'download' ) ) {
-			$file   = 'archive-campaigns.php';
+			$files = apply_filters( 'atcf_crowdfunding_templates_archive', array( 'archive-campaigns.php', 'archive-download.php', 'archive.php' ) );
 		}
 
-		$find[] = $file;
-		$find[] = $this->template_url . $file;
+		foreach ( $files as $file ) {
+			$find[] = $file;
+			$find[] = $this->template_url . $file;
+		}
 
-		if ( $file ) {
+		if ( ! empty( $files ) ) {
 			$template = locate_template( $find );
 
 			if ( ! $template ) 
@@ -215,27 +221,26 @@ final class AT_CrowdFunding {
 	/**
 	 * Loads the plugin language files
 	 *
-	 * @since AT_CrowdFunding 0.1-alpha
+	 * @since Appthemer CrowdFunding 0.1-alpha
 	 */
 	public function load_textdomain() {
 		// Traditional WordPress plugin locale filter
-		$locale        = apply_filters( 'plugin_locale',  get_locale(), $this->domain );
+		$locale        = apply_filters( 'plugin_locale', get_locale(), $this->domain );
 		$mofile        = sprintf( '%1$s-%2$s.mo', $this->domain, $locale );
 
 		// Setup paths to current locale file
 		$mofile_local  = $this->lang_dir . $mofile;
 		$mofile_global = WP_LANG_DIR . '/' . $this->domain . '/' . $mofile;
 
-		// Look in global /wp-content/languages/crowdfunding folder
+		// Look in global /wp-content/languages/atcf folder
 		if ( file_exists( $mofile_global ) ) {
 			return load_textdomain( $this->domain, $mofile_global );
 
-		// Look in local /wp-content/plugins/crowdfunding/languages/ folder
+		// Look in local /wp-content/plugins/appthemer-crowdfunding/languages/ folder
 		} elseif ( file_exists( $mofile_local ) ) {
 			return load_textdomain( $this->domain, $mofile_local );
 		}
 
-		// Nothing found
 		return false;
 	}
 }
@@ -249,12 +254,12 @@ final class AT_CrowdFunding {
  *
  * Example: <?php $crowdfunding = crowdfunding(); ?>
  *
- * @since AT_CrowdFunding 0.1-alpha
+ * @since Appthemer CrowdFunding 0.1-alpha
  *
  * @return The one true Crowd Funding Instance
  */
 function crowdfunding() {
-	return AT_CrowdFunding::instance();
+	return ATCF_CrowdFunding::instance();
 }
 
 crowdfunding();
