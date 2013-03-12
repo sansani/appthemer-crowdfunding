@@ -6,7 +6,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: download, downloads, e-store, eshop, digital downloads, crowd funding, crowdfunding, crowdsource, 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 0.2
+Stable Tag: 0.4
 
 License: GNU Version 2 or Any Later Version
 
@@ -97,6 +97,6 @@ Not currently at this time. However, it is very easy to integrate with a theme. 
 
 == Upgrade Notice ==
 
-= 0.2-alpha =
+= 0.4-alpha =
 
-* A ton of bug fixes and improvments in this release.
+* Release with Fundify theme.
