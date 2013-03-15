@@ -21,7 +21,7 @@ Run your own crowdfunding website for anything you can imagine.
 
 Note: The AppThemer Crowdfunding plugin is designed to work alongside the PayPal Adaptive Payments gateway so that pledges are collected but no funds are taken until the campaign reaches its goal. The plugin will also work along side any other gateway that Easy Digital Downloads supports but funds will be taken immediately.
 
-== Features ==
+** Features **
 
 Features of the plugin include:
 
@@ -46,11 +46,11 @@ Features of the plugin include:
 
 Yes. However, it won't look much different than a standard EDD install. Templates must be modified/created to output relevant crowdfunding information (display amount funded, etc).
 
-== Compatible Themes ==
+** Compatible Themes **
 
 The first compatible theme that has been released is called "Fundify" from AppThemer.
 
-== Get Involved ==
+** Get Involved **
 
 Developers can contribute to the source code of the project on GitHub (https://github.com/appthemer/crowdfunding)
 
@@ -86,28 +86,4 @@ Developers can contribute to the source code of the project on GitHub (https://g
 
 = 0.1-alpha: March 6, 2013 =
 
-* First official alpha release! files.
-* Fix: Actually collect funds!
-* Fix: Better errors when submitting a campaign, or collecting funds.
-* New: If PayPal Adaptive Payments is not active, track normal payments.
-* New: Themes without explicit support will output default EDD variable pricing.
-
-= 0.2-alpha: March 7, 2013 =
-
-* Fix: Better loading of exports. 
-* Fix: Shipping fixes, backers, etc.
-* Fix: Load backers at the correct time.
-* Fix: Count amount based on preapproval, not total earnings. 
-* New: Dont activate if EDD is not active.
-* New: Text filters.
-* New: Update readme.txt
-
-= 0.1-alpha: March 6, 2013 =
-
 * First official alpha release!
-
-== Upgrade Notice ==
-
-= 0.4-alpha =
-
-* Release with Fundify theme.
