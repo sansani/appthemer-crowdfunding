@@ -778,20 +778,27 @@ class ATCF_Campaign {
 		$prices  = edd_get_variable_prices( $this->ID );
 		$totals  = array();
 
-		if ( empty( $backers ) )
-			return $totals;
+		if ( ! is_array( $backers ) )
+			$backers = array();
+
+		foreach ( $prices as $price ) {
+			$totals[$price[ 'amount' ]] = 0;
+		}
 
 		foreach ( $backers as $log ) {
 			$payment_id = get_post_meta( $log->ID, '_edd_log_payment_id', true );
+
+			$payment    = get_post( $payment_id );
+			
+			if ( empty( $payment ) )
+				continue;
+
 			$cart_items = edd_get_payment_meta_cart_details( $payment_id );
 			
 			foreach ( $cart_items as $item ) {
-				$price_id = $item[ 'item_number' ][ 'options' ][ 'price_id' ];
+				$price_id = $item[ 'price' ];
 
-				if ( ! isset( $totals[$price_id] ) )
-					$totals[$price_id] = isset ( $totals[$price_id] ) ? $totals[$price_id] : 0;
-				else
-					$totals[$price_id] = $totals[$price_id] + 1;
+				$totals[$price_id] = $totals[$price_id] + 1;
 			}
 		}
 
@@ -978,8 +985,10 @@ function atcf_shortcode_submit_process() {
 	$category  = $_POST[ 'cat' ];
 	$content   = $_POST[ 'description' ];
 	$excerpt   = $_POST[ 'excerpt' ];
+	$author    = $_POST[ 'name' ];
 
 	$image     = $_FILES[ 'image' ];
+	$video     = $_POST[ 'video' ];
 
 	$rewards   = $_POST[ 'rewards' ];
 	$files     = $_FILES[ 'files' ];
@@ -1031,7 +1040,7 @@ function atcf_shortcode_submit_process() {
 
 	do_action( 'atcf_campaign_submit_validate', $_POST, $errors );
 
-	if ( is_wp_error( $errors ) )
+	if ( ! empty ( $errors->errors ) ) // Not sure how to avoid empty instantiated WP_Error
 		wp_die( $errors );
 
 	$args = apply_filters( 'atcf_campaign_submit_data', array(
@@ -1052,6 +1061,8 @@ function atcf_shortcode_submit_process() {
 	add_post_meta( $campaign, 'campaign_email', sanitize_text_field( $email ) );
 	add_post_meta( $campaign, 'campaign_end_date', sanitize_text_field( $end_date ) );
 	add_post_meta( $campaign, 'campaign_location', sanitize_text_field( $location ) );
+	add_post_meta( $campaign, 'campaign_author', sanitize_text_field( $author ) );
+	add_post_meta( $campaign, 'campaign_video', esc_url( $video ) );
 	
 	foreach ( $rewards as $key => $reward ) {
 		$edd_files[] = array(
@@ -1087,8 +1098,8 @@ function atcf_shortcode_submit_process() {
 	}
 
 	if ( '' != $image[ 'name' ] ) {
-		$upload = wp_handle_upload( $images, $upload_overrides );
-
+		$upload = wp_handle_upload( $image, $upload_overrides );
+		
 		$attachment = array(
 			'guid'           => $upload[ 'url' ], 
 			'post_mime_type' => $upload[ 'type' ],
