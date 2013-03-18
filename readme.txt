@@ -7,7 +7,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: download, downloads, e-store, eshop, digital downloads, crowd funding, crowdfunding, crowdsource, 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 0.5
+Stable Tag: 0.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -58,7 +58,17 @@ Yes. However, it won't look much different than a standard EDD install. Template
 
 == Changelog ==
 
-= 0.5: March 12, 2013 =
+= 0.6: March 18 =
+
+* Fix: When adding rewards via frontend, make sure blank fields are added in the correct spot.
+* Fix: Always show backer rewards in ascending price order, no matter how they are entered.
+* Fix: Don't use getTimestamp() method on DateTime (not supported in 5.2) -- format() instead.
+* New: Added french translation to plugin.
+* New: Create a user account on campaign submission. This allows campaign authors to edit their campaigns
+* New: jQuery validate frontend submission before server validation.
+* New: Collect a contact email separate from PayPal for contacting the campaign author
+
+= 0.5: March 14, 2013 =
 
 * Fix: Don't kill the frontend form submission when there are no errors.
 * Fix: Save campaign author/organization on frontend form submission.
@@ -89,4 +99,3 @@ Yes. However, it won't look much different than a standard EDD install. Template
 = 0.1-alpha: March 6, 2013 =
 
 * First official alpha release!
-se!
