@@ -7,7 +7,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: download, downloads, e-store, eshop, digital downloads, crowd funding, crowdfunding, crowdsource, 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 0.6
+Stable Tag: 0.7
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -15,7 +15,7 @@ A crowdfunding platform in the likes of Kickstarter and Indigogo
 
 == Description ==
 
-Crowdfunding by AppThemer is a funding platform for WordPress. An extension that seamlessly integrates with Easy Digital Downloads, the Crowdfunding plugin lets you crowd source everything from films, games, and music to art, design, and technology.
+Crowdfunding by [AppThemer](http://appthemer.com/fundify.html) is a funding platform for WordPress. An extension that seamlessly integrates with Easy Digital Downloads, the Crowdfunding plugin lets you crowd source everything from films, games, and music to art, design, and technology.
 
 "Backers" can pledge specified amounts of money towards a project and receive rewards for their contributions. Pledge amounts are only collected if a campaign reaches its goal in the time specified.
 
@@ -58,7 +58,13 @@ Yes. However, it won't look much different than a standard EDD install. Template
 
 == Changelog ==
 
-= 0.6: March 18 =
+= 0.7: March 26, 2013 =
+
+* New: Funding types -- Fixed (default) or flexible funding. Allow a higher commission to be set on flexible funding.
+* New: Settings to specify the page that contains the frontend submission shortcode, as well as an FAQ page.
+* Fix: Some more backward compatibility stuff for DateTime functionality on hosts running PHP < 5.3
+
+= 0.6: March 18, 2013 =
 
 * Fix: When adding rewards via frontend, make sure blank fields are added in the correct spot.
 * Fix: Always show backer rewards in ascending price order, no matter how they are entered.
