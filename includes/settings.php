@@ -32,6 +32,7 @@ function atcf_settings_general( $settings ) {
 
 	$keys[] = 'faq_page';
 	$keys[] = 'submit_page';
+	$keys[] = 'profile_page';
 
 	$vals[] =  array(
 		'id'      => 'faq_page',
@@ -49,6 +50,14 @@ function atcf_settings_general( $settings ) {
 		'options' => $pages_options
 	);
 
+	$vals[] =  array(
+		'id'      => 'profile_page',
+		'name'    => __( 'Profile Page', 'atcf' ),
+		'desc'    => __( 'The page that contains the <code>[appthemer_crowdfunding_profile]</code> shortcode.', 'atcf' ),
+		'type'    => 'select',
+		'options' => $pages_options
+	);
+
 	return array_merge( array_combine( $keys, $vals ), array_combine( $keys2, $vals2 ) );
 }
 add_filter( 'edd_settings_general', 'atcf_settings_general' );
@@ -62,15 +71,17 @@ add_filter( 'edd_settings_general', 'atcf_settings_general' );
  * @return $settings
  */
 function atcf_settings_gateway( $settings ) {
+	if ( ! class_exists( 'PayPalAdaptivePaymentsGateway' ) )
+		return $settings;
+
 	$settings[ 'epap_flexible_fee' ] = array(
-			'id'   => 'epap_flexible_fee',
-			'name' => __( 'Additional Flexible Fee', 'epap' ),
-			'desc' => __( '%. <span class="description">If a campaign is flexible, increase commission by this percent.</span>', 'atcf' ),
-			'type' => 'text',
-			'size' => 'small'
-		);
+		'id'   => 'epap_flexible_fee',
+		'name' => __( 'Additional Flexible Fee', 'epap' ),
+		'desc' => __( '%. <span class="description">If a campaign is flexible, increase commission by this percent.</span>', 'atcf' ),
+		'type' => 'text',
+		'size' => 'small'
+	);
 
 	return $settings;
 }
-if ( class_exists( 'PayPalAdaptivePaymentsGateway' ) )
-	add_filter( 'edd_settings_gateways', 'atcf_settings_gateway', 100 );
+add_filter( 'edd_settings_gateways', 'atcf_settings_gateway', 100 );

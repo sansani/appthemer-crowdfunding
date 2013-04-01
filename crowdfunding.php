@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      AppThemer
  * Author URI:  http://appthemer.com
- * Version:     0.7
+ * Version:     0.8.1
  * Text Domain: atcf
  */
 
@@ -96,11 +96,12 @@ final class ATCF_CrowdFunding {
 		require( $this->includes_dir . 'settings.php' );
 		require( $this->includes_dir . 'campaign.php' );
 		require( $this->includes_dir . 'theme-stuff.php' );
-		require( $this->includes_dir . 'shortcode-submit.php' );
 		require( $this->includes_dir . 'shipping.php' );
 		require( $this->includes_dir . 'logs.php' );
 		require( $this->includes_dir . 'export.php' );
 		require( $this->includes_dir . 'roles.php' );
+		require( $this->includes_dir . 'shortcode-submit.php' );
+		require( $this->includes_dir . 'shortcode-profile.php' );
 
 		do_action( 'atcf_include_files' );
 
