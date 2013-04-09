@@ -255,16 +255,4 @@ final class ATCF_CrowdFunding {
 function crowdfunding() {
 	return ATCF_CrowdFunding::instance();
 }
-crowdfunding();t without needing
- * to declare the global.
- *
- * Example: <?php $crowdfunding = crowdfunding(); ?>
- *
- * @since Appthemer CrowdFunding 0.1-alpha
- *
- * @return The one true Crowd Funding Instance
- */
-function crowdfunding() {
-	return ATCF_CrowdFunding::instance();
-}
 crowdfunding();
