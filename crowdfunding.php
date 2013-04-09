@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Crowd Funding by AppThemer
- * Plugin URI:  http://appthemer.com/crowdfunding
+ * Plugin URI:  https://github.com/AppThemer/crowdfunding/
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      AppThemer
  * Author URI:  http://appthemer.com
- * Version:     0.8.1
+ * Version:     0.9
  * Text Domain: atcf
  */
 
@@ -100,6 +100,8 @@ final class ATCF_CrowdFunding {
 		require( $this->includes_dir . 'logs.php' );
 		require( $this->includes_dir . 'export.php' );
 		require( $this->includes_dir . 'roles.php' );
+		require( $this->includes_dir . 'permalinks.php' );
+		require( $this->includes_dir . 'checkout.php' );
 		require( $this->includes_dir . 'shortcode-submit.php' );
 		require( $this->includes_dir . 'shortcode-profile.php' );
 
@@ -122,7 +124,6 @@ final class ATCF_CrowdFunding {
 		add_action( 'init', array( $this, 'is_edd_activated' ), 1 );
 
 		add_filter( 'template_include', array( $this, 'template_loader' ) );
-		add_action( 'init', array( $this, 'endpoints' ) );
 		
 		do_action( 'atcf_setup_actions' );
 
@@ -164,19 +165,6 @@ final class ATCF_CrowdFunding {
 				); ?></p>
 		</div>
 <?php
-	}
-
-	/**
-	 * Add Endpoint for backers. This allows us to monitor
-	 * the query to create "fake" URLs for seeing backers.
-	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
-	 *
-	 * @return void
-	 */
-	function endpoints() {
-		add_rewrite_endpoint( 'backers', EP_PERMALINK | EP_PAGES );
-		add_rewrite_endpoint( 'edit', EP_PERMALINK | EP_PAGES );
 	}
 
 	/**
@@ -256,6 +244,18 @@ final class ATCF_CrowdFunding {
  * to functions everywhere.
  *
  * Use this function like you would a global variable, except without needing
+ * to declare the global.
+ *
+ * Example: <?php $crowdfunding = crowdfunding(); ?>
+ *
+ * @since Appthemer CrowdFunding 0.1-alpha
+ *
+ * @return The one true Crowd Funding Instance
+ */
+function crowdfunding() {
+	return ATCF_CrowdFunding::instance();
+}
+crowdfunding();t without needing
  * to declare the global.
  *
  * Example: <?php $crowdfunding = crowdfunding(); ?>

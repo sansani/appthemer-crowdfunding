@@ -65,6 +65,9 @@ class ATCF_Campaigns {
 		add_filter( 'edd_metabox_fields_save', array( $this, 'meta_boxes_save' ) );
 		add_filter( 'edd_metabox_save_campaign_end_date', 'atcf_campaign_save_end_date' );
 
+		add_action( 'edd_download_price_table_head', 'atcf_pledge_limit_head' );
+		add_action( 'edd_download_price_table_row', 'atcf_pledge_limit_column', 10, 3 );
+
 		add_action( 'admin_action_atcf-collect-funds', array( $this, 'collect_funds' ) );
 		add_filter( 'post_updated_messages', array( $this, 'messages' ) );
 
@@ -220,6 +223,7 @@ class ATCF_Campaigns {
 			add_meta_box( 'atcf_campaign_funds', __( 'Campaign Funds', 'atcf' ), '_atcf_metabox_campaign_funds', 'download', 'side', 'high' );
 
 		add_meta_box( 'atcf_campaign_stats', __( 'Campaign Stats', 'atcf' ), '_atcf_metabox_campaign_stats', 'download', 'side', 'high' );
+		add_meta_box( 'atcf_campaign_updates', __( 'Campaign Updates', 'atcf' ), '_atcf_metabox_campaign_updates', 'download', 'normal', 'high' );
 		add_meta_box( 'atcf_campaign_video', __( 'Campaign Video', 'atcf' ), '_atcf_metabox_campaign_video', 'download', 'normal', 'high' );
 
 		add_action( 'edd_meta_box_fields', '_atcf_metabox_campaign_info', 5 );
@@ -238,6 +242,7 @@ class ATCF_Campaigns {
 	 */
 	function meta_boxes_save( $fields ) {
 		$fields[] = '_campaign_featured';
+		$fields[] = '_campaign_physical';
 		$fields[] = 'campaign_goal';
 		$fields[] = 'campaign_email';
 		$fields[] = 'campaign_contact_email';
@@ -246,6 +251,7 @@ class ATCF_Campaigns {
 		$fields[] = 'campaign_location';
 		$fields[] = 'campaign_author';
 		$fields[] = 'campaign_type';
+		$fields[] = 'campaign_updates';
 
 		return $fields;
 	}
@@ -430,6 +436,53 @@ function atcf_campaign_save_end_date( $new ) {
 }
 
 /**
+ * Price row head
+ *
+ * @since Appthemer CrowdFunding 0.9
+ *
+ * @return void
+ */
+function atcf_pledge_limit_head() {
+?>
+	<th style="width: 30px"><?php _e( 'Limit', 'edd' ); ?></th>
+	<th style="width: 30px"><?php _e( 'Purchased', 'edd' ); ?></th>
+<?php
+}
+
+/**
+ * Price row columns
+ *
+ * @since Appthemer CrowdFunding 0.9
+ *
+ * @return void
+ */
+function atcf_pledge_limit_column( $post_id, $key, $args ) {
+?>
+	<td>
+		<input type="text" class="edd_repeatable_name_field" name="edd_variable_prices[<?php echo $key; ?>][limit]" id="edd_variable_prices[<?php echo $key; ?>][limit]" value="<?php echo $args[ 'limit' ]; ?>" style="width:100%" />
+	</td>
+	<td>
+		<input type="text" class="edd_repeatable_name_field" name="edd_variable_prices[<?php echo $key; ?>][bought]" id="edd_variable_prices[<?php echo $key; ?>][bought]" value="<?php echo $args[ 'bought' ]; ?>" readonly style="width:100%" />
+	</td>
+<?php
+}
+
+/**
+ * Price row fields
+ *
+ * @since Appthemer CrowdFunding 0.9
+ *
+ * @return void
+ */
+function atcf_price_row_args( $args, $value ) {
+	$args[ 'limit' ] = isset( $value[ 'limit' ] ) ? $value[ 'limit' ] : '';
+	$args[ 'bought' ] = isset( $value[ 'bought' ] ) ? $value[ 'bought' ] : 0;
+
+	return $args;
+}
+add_filter( 'edd_price_row_args', 'atcf_price_row_args', 10, 2 );
+
+/**
  * Campaign Stats Box
  *
  * These are read-only stats/info for the current campaign.
@@ -519,6 +572,26 @@ function _atcf_metabox_campaign_video() {
 }
 
 /**
+ * Campaign Updates Box
+ *
+ * @since Appthemer CrowdFunding 0.9
+ *
+ * @return void
+ */
+function _atcf_metabox_campaign_updates() {
+	global $post;
+
+	$campaign = atcf_get_campaign( $post );
+
+	do_action( 'atcf_metabox_campaign_updates_before', $campaign );
+?>
+	<textarea name="campaign_updates" rows="4" class="widefat"><?php echo esc_textarea( $campaign->updates() ); ?></textarea>
+	<p class="description"><?php _e( 'Notes and updates about the campaign.', 'atcf' ); ?></p>
+<?php
+	do_action( 'atcf_metabox_campaign_updates_after', $campaign );
+}
+
+/**
  * Campaign Configuration
  *
  * Hook into EDD Download Information and add a bit more stuff.
@@ -547,6 +620,8 @@ function _atcf_metabox_campaign_info() {
 	$ss = mysql2date( 's', $end_date, false );
 
 	do_action( 'atcf_metabox_campaign_info_before', $campaign );
+
+	$types = atcf_campaign_types();
 ?>	
 	<p>
 		<label for="_campaign_featured">
@@ -554,11 +629,18 @@ function _atcf_metabox_campaign_info() {
 			<?php _e( 'Featured campaign', 'atcf' ); ?>
 		</label>
 	</p>
+
+	<p>
+		<label for="_campaign_physical">
+			<input type="checkbox" name="_campaign_physical" id="_campaign_physical" value="1" <?php checked( 1, $campaign->needs_shipping() ); ?> />
+			<?php _e( 'Collect shipping information on checkout', 'atcf' ); ?>
+		</label>
+	</p>
 	
 	<p>
-		<label for="campaign_type[fixed]"><input type="radio" name="campaign_type" id="campaign_type[fixed]" value="fixed" <?php checked( 'fixed', $campaign->type() ); ?> /> <?php _e( 'Fixed Funding', 'atcf' ); ?></label></label><br />
-		<label for="campaign_type[flexible]"><input type="radio" name="campaign_type" id="campaign_type[flexible]" value="flexible" <?php checked( 'flexible', $campaign->type() ); ?> /> <?php _e( 'Flexible Funding', 'atcf' ); ?></label>
-			<?php do_action( 'atcf_shortcode_submit_field_type' ); ?>
+		<?php foreach ( atcf_campaign_types_active() as $key => $desc ) : ?>
+		<label for="campaign_type[<?php echo esc_attr( $key ); ?>]"><input type="radio" name="campaign_type" id="campaign_type[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $key ); ?>" <?php checked( $key, $campaign->type() ); ?> /> <strong><?php echo $types[ $key ][ 'title' ]; ?></strong></label><br />
+		<?php endforeach; ?>
 	</p>
 
 	<p>
@@ -637,6 +719,21 @@ function atcf_sanitize_goal_save( $price ) {
 }
 add_filter( 'edd_metabox_save_campaign_goal', 'atcf_sanitize_goal_save' );
 
+/**
+ * Updates Save
+ *
+ * EDD trys to escape this data, and we don't want that.
+ *
+ * @since Appthemer CrowdFunding 0.9
+ */
+function atcf_sanitize_campaign_updates( $updates ) {
+	$updates = $_POST[ 'campaign_updates' ];
+	$updates = wp_kses_post( $updates );
+
+	return $updates;
+}
+add_filter( 'edd_metabox_save_campaign_updates', 'atcf_sanitize_campaign_updates' );
+
 /** Single Campaign *******************************************************/
 
 class ATCF_Campaign {
@@ -674,6 +771,19 @@ class ATCF_Campaign {
 	}
 
 	/**
+	 * Needs Shipping
+	 *
+	 * @since Appthemer CrowdFunding 0.9
+	 *
+	 * @return sting Requires Shipping
+	 */
+	public function needs_shipping() {
+		$physical = $this->__get( '_campaign_physical' );
+
+		return apply_filters( 'atcf_campaign_needs_shipping', $physical, $this );
+	}
+
+	/**
 	 * Campaign Goal
 	 *
 	 * @since Appthemer CrowdFunding 0.1-alpha
@@ -704,7 +814,7 @@ class ATCF_Campaign {
 		$type = $this->__get( 'campaign_type' );
 
 		if ( ! $type )
-			$type = __( 'fixed', 'atcf' );
+			atcf_campaign_type_default();
 
 		return $type;
 	}
@@ -773,6 +883,17 @@ class ATCF_Campaign {
 	 */
 	public function video() {
 		return $this->__get( 'campaign_video' );
+	}
+
+	/**
+	 * Campaign Updates
+	 *
+	 * @since Appthemer CrowdFunding 0.9
+	 *
+	 * @return sting Campaign Updates
+	 */
+	public function updates() {
+		return $this->__get( 'campaign_updates' );
 	}
 
 	/**
@@ -1032,12 +1153,13 @@ function atcf_shortcode_submit_process() {
 	$title     = $_POST[ 'title' ];
 	$goal      = $_POST[ 'goal' ];
 	$length    = $_POST[ 'length' ];
-	$type      = $_POST[ 'type' ];
+	$type      = $_POST[ 'campaign_type' ];
 	$location  = $_POST[ 'location' ];
 	$category  = $_POST[ 'cat' ];
 	$content   = $_POST[ 'description' ];
 	$excerpt   = $_POST[ 'excerpt' ];
 	$author    = $_POST[ 'name' ];
+	$shipping  = $_POST[ 'shipping' ];
 
 	$image     = $_FILES[ 'image' ];
 	$video     = $_POST[ 'video' ];
@@ -1067,10 +1189,13 @@ function atcf_shortcode_submit_process() {
 	/** Check Length */
 	$length = absint( $length );
 
-	if ( $length < 14 )
-		$length = 14;
-	else if ( $length > 42 )
-		$length = 42;
+	$min = isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14;
+	$max = isset ( $edd_options[ 'atcf_campaign_length_max' ] ) ? $edd_options[ 'atcf_campaign_length_max' ] : 42;
+
+	if ( $length < $min )
+		$length = $min;
+	else if ( $length > $max )
+		$length = $max;
 
 	$end_date = strtotime( sprintf( '+%d day', $length ) );
 	$end_date = get_gmt_from_date( date( 'Y-m-d H:i:s', $end_date ) );
@@ -1132,13 +1257,12 @@ function atcf_shortcode_submit_process() {
 		'post_title'   => $title,
 		'post_content' => $content,
 		'post_excerpt' => $excerpt,
-		'post_author'  => $user_id,
-		'tax_input'    => array(
-			'download_category' => array( $category )
-		)
+		'post_author'  => $user_id
 	), $_POST );
 
 	$campaign = wp_insert_post( $args, true );
+
+	wp_set_object_terms( $campaign, array( $category ), 'download_category' );
 
 	/** Extra Campaign Information */
 	add_post_meta( $campaign, 'campaign_goal', apply_filters( 'edd_metabox_save_edd_price', $goal ) );
@@ -1149,6 +1273,7 @@ function atcf_shortcode_submit_process() {
 	add_post_meta( $campaign, 'campaign_location', sanitize_text_field( $location ) );
 	add_post_meta( $campaign, 'campaign_author', sanitize_text_field( $author ) );
 	add_post_meta( $campaign, 'campaign_video', esc_url( $video ) );
+	add_post_meta( $campaign, '_campaign_physical', sanitize_text_field( $shipping ) );
 	
 	foreach ( $rewards as $key => $reward ) {
 		$edd_files[] = array(
@@ -1158,7 +1283,8 @@ function atcf_shortcode_submit_process() {
 
 		$prices[] = array(
 			'name'   => sanitize_text_field( $reward[ 'description' ] ),
-			'amount' => apply_filters( 'edd_metabox_save_edd_price', $reward[ 'price' ] )
+			'amount' => apply_filters( 'edd_metabox_save_edd_price', $reward[ 'price' ] ),
+			'limit'  => sanitize_text_field( $reward[ 'limit' ] )
 		);
 	}
 
@@ -1254,6 +1380,7 @@ function atcf_campaign_edit() {
 	
 	$category  = $_POST[ 'cat' ];
 	$content   = $_POST[ 'description' ];
+	$updates   = $_POST[ 'updates' ];
 	$excerpt   = $_POST[ 'excerpt' ];
 
 	$email     = $_POST[ 'email' ];
@@ -1303,6 +1430,7 @@ function atcf_campaign_edit() {
 	update_post_meta( $post->ID, 'campaign_contact_email', sanitize_text_field( $c_email ) );
 	update_post_meta( $post->ID, 'campaign_location', sanitize_text_field( $location ) );
 	update_post_meta( $post->ID, 'campaign_author', sanitize_text_field( $author ) );
+	update_post_meta( $post->ID, 'campaign_updates', wp_kses_post( $updates ) );
 
 	do_action( 'atcf_edit_campaign_after', $post->ID, $_POST );
 
@@ -1334,4 +1462,48 @@ function atcf_edd_price_options_heading( $heading ) {
  */
 function atcf_edd_variable_pricing_toggle_text( $text ) {
 	return __( 'Enable multiple reward options', 'atcf' );
+}
+
+/**
+ * Campaign Types
+ *
+ * @since AppThemer Crowdfunding 0.9
+ */
+function atcf_campaign_types() {
+	$types = apply_filters( 'atcf_campaign_types', array(
+		'fixed'    => array(
+			'title'       => __( 'Fixed Funding', 'atcf' ),
+			'description' => __( 'Only collect funds if the goal is met.', 'atcf' )
+		),
+		'flexible' => array(
+			'title'       => __( 'Flexible Funding', 'atcf' ),
+			'description' => __( 'Collect funds no matter what. A higher fee may be charged.', 'atcf' )
+		)
+	) );
+
+	return $types;
+}
+
+function atcf_campaign_types_active() {
+	global $edd_options;
+
+	$types  = atcf_campaign_types();
+	$active = isset ( $edd_options[ 'atcf_campaign_types' ] ) ? $edd_options[ 'atcf_campaign_types' ] : null;
+
+	if ( ! $active ) {
+		$keys = array();
+
+		foreach ( $types as $key => $type )
+			$keys[ $key ] = $type[ 'title' ] . ' &mdash; <small>' . $type[ 'description' ] . '</small>';
+
+		return $keys;
+	}
+
+	return $active;
+}
+
+function atcf_campaign_type_default() {
+	$type = apply_filters( 'atcf_campaign_type_default', 'fixed' );
+
+	return $type;
 }
