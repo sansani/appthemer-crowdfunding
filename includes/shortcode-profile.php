@@ -78,7 +78,7 @@ function atcf_profile_info_fields_nicename( $user, $userinfo ) {
 ?>
 	<p class="atcf-profile-info-first-name">
 		<label for="first-name"><?php _e( 'Name', 'atcf' ); ?></label>
-		<input type="text" name="nicename" id="nicename" value="<?php echo esc_attr( $user->user_nicename ); ?>" />
+		<input type="text" name="nicename" id="nicename" value="<?php echo esc_attr( $user->display_name ); ?>" />
 	</p>
 <?php
 }
@@ -159,18 +159,27 @@ function atcf_shortcode_profile_campaigns( $user ) {
 	<ul class="atcf-profile-campaigns">
 	<?php if ( $campaigns->have_posts() ) : while ( $campaigns->have_posts() ) : $campaigns->the_post(); $campaign = atcf_get_campaign( get_post()->ID ); ?>
 		<li class="atcf-profile-campaign-overview">
+			<?php do_action( 'atcf_profile_campaign_before', $campaign ); ?>
+
 			<h4 class="entry-title">
 				<?php the_title(); ?>
 			</h4>
 
+			<?php do_action( 'atcf_profile_campaign_after_title', $campaign ); ?>
+
 			<?php if ( 'pending' == get_post()->post_status ) : ?>
+				<?php do_action( 'atcf_profile_campaign_pending_before', $campaign ); ?>
 				<span class="campaign-awaiting-review"><?php _e( 'This campaign is awaiting review.', 'atcf' ); ?></span>
+				<?php do_action( 'atcf_profile_campaign_pending_after', $campaign ); ?>
 			<?php else : ?>	
+				<?php do_action( 'atcf_profile_campaign_published_before', $campaign ); ?>
+
 				<ul class="actions">
 					<li><a href="<?php the_permalink(); ?>" title="<?php echo esc_attr( sprintf( __( 'Permalink to %s', 'fundify' ), the_title_attribute( 'echo=0' ) ) ); ?>" rel="bookmark"><?php _e( 'View', 'atcf' ); ?></a></li>
 					<li><a href="<?php the_permalink(); ?>edit/" title="<?php echo esc_attr( sprintf( __( 'Edit %s', 'fundify' ), the_title_attribute( 'echo=0' ) ) ); ?>" rel="bookmark"><?php _e( 'Edit', 'atcf' ); ?></a></li>
 					<li><a href="<?php the_permalink(); ?>#comments" title="<?php echo esc_attr( sprintf( __( 'Comments for %s', 'fundify' ), the_title_attribute( 'echo=0' ) ) ); ?>" rel="bookmark"><?php _e( 'Comments', 'atcf' ); ?></a></li>
 					<li><a href="<?php the_permalink(); ?>backers/" title="<?php echo esc_attr( sprintf( __( 'Backers for %s', 'fundify' ), the_title_attribute( 'echo=0' ) ) ); ?>" rel="bookmark"><?php _e( 'Backers', 'atcf' ); ?></a></li>
+					<?php do_action( 'atcf_profile_campaign_actions_all', $campaign ); ?>
 				</ul>
 
 				<ul class="actions">
@@ -181,8 +190,12 @@ function atcf_shortcode_profile_campaigns( $user ) {
 					<?php if ( ( 'flexible' == $campaign->type() || $campaign->is_funded() ) ) : ?>
 					<li><a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'atcf-request-data', 'campaign' => $campaign->ID ) ), 'atcf-request-data' ) ); ?>" title="<?php echo esc_attr( sprintf( __( 'Export data for %s', 'fundify' ), the_title_attribute( 'echo=0' ) ) ); ?>" rel="bookmark"><?php _e( 'Export Data', 'atcf' ); ?></a></li>
 					<?php endif; ?>
+					<?php do_action( 'atcf_profile_campaign_actions_special', $campaign ); ?>
 				</ul>
+
+				<?php do_action( 'atcf_profile_campaign_published_after', $campaign ); ?>
 			<?php endif; ?>
+			<?php do_action( 'atcf_profile_campaign_after', $campaign ); ?>
 		</li>	
 	<?php endwhile; endif; wp_reset_query(); ?>
 	</ul>
@@ -222,10 +235,11 @@ function atcf_shortcode_profile_info_process() {
 		wp_die( $errors );
 
 	wp_update_user( apply_filters( 'atcf_shortcode_profile_info_process_update', array(
-		'ID'            => $user->ID,
-		'description'   => $bio,
-		'user_nicename' => $nicename,
-		'user_url'      => $url
+		'ID'               => $user->ID,
+		'description'      => $bio,
+		'display_name'     => $nicename,
+		'user_nicename'    => $user->user_nicename,
+		'user_url'         => $url
 	) ) );
 
 	foreach ( _wp_get_user_contactmethods() as $method => $name ) {
@@ -330,7 +344,7 @@ function atcf_shortcode_profile_request_data() {
 	$errors       = new WP_Error();
 
 	$crowdfunding = crowdfunding();
-	$campaign     = absint( $campaign );
+	$campaign     = absint( $_GET[ 'campaign' ] );
 	$campaign     = atcf_get_campaign( $campaign );
 
 	if ( $user->ID != $campaign->data->post_author )
@@ -343,7 +357,7 @@ function atcf_shortcode_profile_request_data() {
 		require_once EDD_PLUGIN_DIR . 'includes/admin/reporting/class-export.php';
 		require( $crowdfunding->includes_dir . 'export-campaigns.php' );
 
-		$campaign_export = new ATCF_Campaign_Export();
+		$campaign_export = new ATCF_Campaign_Export( $campaign->ID );
 
 		$campaign_export->export();
 	}

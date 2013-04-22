@@ -25,7 +25,7 @@ function atcf_export_campaign() {
 		require_once EDD_PLUGIN_DIR . 'includes/admin/reporting/class-export.php';
 		require( $crowdfunding->includes_dir . 'export-campaigns.php' );
 
-		$campaign_export = new ATCF_Campaign_Export();
+		$campaign_export = new ATCF_Campaign_Export( $campaign_id );
 
 		$campaign_export->export();
 	}
@@ -59,7 +59,7 @@ function atcf_campaign_export_box() {
 									foreach( $campaigns as $campaign ) {
 										$_campaign = atcf_get_campaign( $campaign );
 
-										if ( ! $_campaign->is_funded() )
+										if ( apply_filters( 'atcf_export_filter_completed', ! $_campaign->is_funded() && 'fixed' == $_campaign->type() ) )
 											continue;
 
 										echo '<option value="' . $campaign->ID . '">' . $campaign->post_title . '</option>';

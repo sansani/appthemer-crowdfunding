@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      AppThemer
  * Author URI:  http://appthemer.com
- * Version:     0.9
+ * Version:     1.0
  * Text Domain: atcf
  */
 
@@ -104,6 +104,8 @@ final class ATCF_CrowdFunding {
 		require( $this->includes_dir . 'checkout.php' );
 		require( $this->includes_dir . 'shortcode-submit.php' );
 		require( $this->includes_dir . 'shortcode-profile.php' );
+		require( $this->includes_dir . 'shortcode-login.php' );
+		require( $this->includes_dir . 'shortcode-register.php' );
 
 		do_action( 'atcf_include_files' );
 
@@ -188,12 +190,16 @@ final class ATCF_CrowdFunding {
 		$files = array();
 
 		if ( isset ( $wp_query->query_vars[ 'edit' ] ) && is_singular( 'download' ) && ( $wp_query->queried_object->post_author == get_current_user_id() || current_user_can( 'manage_options' ) ) ) {
+			do_action( 'atcf_found_edit' );
+
 			$files = apply_filters( 'atcf_crowdfunding_templates_edit', array( 'single-campaign-edit.php' ) );
-		} else if ( isset ( $wp_query->query_vars[ 'backers' ] ) && is_singular( 'download' ) ) {
-			$files = apply_filters( 'atcf_crowdfunding_templates_backers', array( 'single-campaign-backers.php' ) );
 		} else if ( is_singular( 'download' ) ) {
+			do_action( 'atcf_found_single' );
+
 			$files = apply_filters( 'atcf_crowdfunding_templates_campaign', array( 'single-campaign.php', 'single-download.php', 'single.php' ) );
 		} else if ( is_post_type_archive( 'download' ) ) {
+			do_action( 'atcf_found_archive' );
+
 			$files = apply_filters( 'atcf_crowdfunding_templates_archive', array( 'archive-campaigns.php', 'archive-download.php', 'archive.php' ) );
 		}
 
