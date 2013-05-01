@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Crowd Funding by AppThemer
- * Plugin URI:  https://github.com/AppThemer/crowdfunding/
+ * Plugin Name: Crowd Funding by Astoundify
+ * Plugin URI:  https://github.com/astoundify/crowdfunding/
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
- * Author:      AppThemer
- * Author URI:  http://appthemer.com
- * Version:     1.0
+ * Author:      Astoundify
+ * Author URI:  http://astoundify.com
+ * Version:     1.1
  * Text Domain: atcf
  */
 
@@ -61,7 +61,7 @@ final class ATCF_CrowdFunding {
 	private function setup_globals() {
 		/** Versions **********************************************************/
 
-		$this->version    = '0.3-alpha';
+		$this->version    = '1.1';
 		$this->db_version = '1';
 
 		/** Paths *************************************************************/
@@ -95,6 +95,7 @@ final class ATCF_CrowdFunding {
 	private function includes() {
 		require( $this->includes_dir . 'settings.php' );
 		require( $this->includes_dir . 'campaign.php' );
+		require( $this->includes_dir . 'gateways.php' );
 		require( $this->includes_dir . 'theme-stuff.php' );
 		require( $this->includes_dir . 'shipping.php' );
 		require( $this->includes_dir . 'logs.php' );
@@ -124,7 +125,6 @@ final class ATCF_CrowdFunding {
 	 */
 	private function setup_actions() {
 		add_action( 'init', array( $this, 'is_edd_activated' ), 1 );
-
 		add_filter( 'template_include', array( $this, 'template_loader' ) );
 		
 		do_action( 'atcf_setup_actions' );
@@ -197,7 +197,7 @@ final class ATCF_CrowdFunding {
 			do_action( 'atcf_found_single' );
 
 			$files = apply_filters( 'atcf_crowdfunding_templates_campaign', array( 'single-campaign.php', 'single-download.php', 'single.php' ) );
-		} else if ( is_post_type_archive( 'download' ) ) {
+		} else if ( is_post_type_archive( 'download' ) || is_tax( 'download_category' ) ) {
 			do_action( 'atcf_found_archive' );
 
 			$files = apply_filters( 'atcf_crowdfunding_templates_archive', array( 'archive-campaigns.php', 'archive-download.php', 'archive.php' ) );
@@ -261,4 +261,5 @@ final class ATCF_CrowdFunding {
 function crowdfunding() {
 	return ATCF_CrowdFunding::instance();
 }
+
 crowdfunding();

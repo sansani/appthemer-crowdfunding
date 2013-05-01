@@ -26,14 +26,6 @@ function atcf_shortcode_submit( $editing = false ) {
 
 	ob_start();
 
-	if ( ! is_user_logged_in() && $edd_options[ 'atcf_settings_require_account' ] ) {
-		wp_login_form( apply_filters( 'atcf_shortcode_profile_login_args', array() ) );
-
-		$form = ob_get_clean();
-
-		return $form;
-	}
-
 	if ( $editing ) {
 		global $post;
 
@@ -125,7 +117,7 @@ function atcf_shortcode_submit_field_length( $editing, $campaign ) {
 	$min = isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14;
 	$max = isset ( $edd_options[ 'atcf_campaign_length_max' ] ) ? $edd_options[ 'atcf_campaign_length_max' ] : 48;
 
-	$start = round( ( $min + $max ) / 2 );
+	$start = apply_filters( 'atcf_shortcode_submit_field_length_start', round( ( $min + $max ) / 2 ) );
 ?>
 	<p class="atcf-submit-campaign-length">
 		<label for="length"><?php _e( 'Length (Days)', 'atcf' ); ?></label>
@@ -272,7 +264,7 @@ function atcf_shortcode_submit_field_excerpt( $editing, $campaign ) {
 ?>
 	<p class="atcf-submit-campaign-excerpt">
 		<label for="excerpt"><?php _e( 'Excerpt', 'atcf' ); ?></label>
-		<textarea name="excerpt" id="excerpt" value="<?php echo $editing ? $campaign->data->post_excerpt : null; ?>"></textarea>
+		<textarea name="excerpt" id="excerpt" value="<?php echo $editing ? apply_filters( 'get_the_excerpt', $campaign->data->post_excerpt ) : null; ?>"></textarea>
 	</p>
 <?php
 }
@@ -374,13 +366,13 @@ function atcf_shortcode_submit_field_rewards( $editing, $campaign ) {
 add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_rewards', 90, 2 );
 
 /**
- * Campaign PayPal Email
+ * Campaign Contact Email
  *
  * @since CrowdFunding 0.1-alpha
  *
  * @return void
  */
-function atcf_shortcode_submit_field_paypal_email( $editing, $campaign ) {
+function atcf_shortcode_submit_field_contact_email( $editing, $campaign ) {
 ?>
 	<h3 class="atcf-submit-section payment-information"><?php _e( 'Your Information', 'atcf' ); ?></h3>
 
@@ -396,14 +388,9 @@ function atcf_shortcode_submit_field_paypal_email( $editing, $campaign ) {
 	<?php endif; ?>
 	</p>
 	<?php endif; ?>
-
-	<p class="atcf-submit-campaign-paypal-email">
-		<label for="email"><?php _e( 'PayPal Email', 'atcf' ); ?></label>
-		<input type="text" name="email" id="email" value="<?php echo $editing ? $campaign->paypal_email() : null; ?>" />
-	</p>
 <?php
 }
-add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_paypal_email', 100, 2 );
+add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_contact_email', 100, 2 );
 
 /**
  * Campaign Author
@@ -518,8 +505,6 @@ function atcf_shortcode_submit_process() {
 
 	$rewards   = $_POST[ 'rewards' ];
 	$files     = $_FILES[ 'files' ];
-
-	$email     = $_POST[ 'email' ];
 	
 	if ( isset ( $_POST[ 'contact-email' ] ) )
 		$c_email = $_POST[ 'contact-email' ];
@@ -574,10 +559,6 @@ function atcf_shortcode_submit_process() {
 	if ( empty( $rewards ) )
 		$errors->add( 'invalid-rewards', __( 'Please add at least one reward to the campaign.', 'atcf' ) );
 
-	/** Check Email */
-	if ( ! is_email( $email ) || ! is_email( $c_email ) )
-		$errors->add( 'invalid-email', __( 'Please make sure all email addresses are valid.', 'atcf' ) );
-
 	if ( email_exists( $c_email ) && ! isset ( $current_user ) )
 		$errors->add( 'invalid-c-email', __( 'That contact email address already exists.', 'atcf' ) );		
 
@@ -616,7 +597,6 @@ function atcf_shortcode_submit_process() {
 	/** Extra Campaign Information */
 	add_post_meta( $campaign, 'campaign_goal', apply_filters( 'edd_metabox_save_edd_price', $goal ) );
 	add_post_meta( $campaign, 'campaign_type', sanitize_text_field( $type ) );
-	add_post_meta( $campaign, 'campaign_email', sanitize_text_field( $email ) );
 	add_post_meta( $campaign, 'campaign_contact_email', sanitize_text_field( $c_email ) );
 	add_post_meta( $campaign, 'campaign_end_date', sanitize_text_field( $end_date ) );
 	add_post_meta( $campaign, 'campaign_location', sanitize_text_field( $location ) );
@@ -698,3 +678,22 @@ function atcf_shortcode_submit_process() {
 	exit();
 }
 add_action( 'template_redirect', 'atcf_shortcode_submit_process' );
+
+/**
+ * Redirect submit page if needed.
+ *
+ * @since Appthemer CrowdFunding 1.1
+ *
+ * @return void
+ */
+function atcf_shortcode_submit_redirect() {
+	global $edd_options, $post;
+
+	if ( ! is_user_logged_in() && ( $post->ID == $edd_options[ 'submit_page' ] ) && $edd_options[ 'atcf_settings_require_account' ] ) {
+		$redirect = apply_filters( 'atcf_require_account_redirect', isset ( $edd_options[ 'login_page' ] ) ? get_permalink( $edd_options[ 'login_page' ] ) : home_url() );
+
+		wp_safe_redirect( $redirect );
+		exit();
+	}
+}
+add_action( 'template_redirect', 'atcf_shortcode_submit_redirect', 1 );
