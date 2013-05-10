@@ -44,7 +44,7 @@ function atcf_shortcode_submit( $editing = false ) {
 		<?php do_action( 'atcf_shortcode_submit_fields', $editing, $campaign ); ?>
 
 		<p class="atcf-submit-campaign-submit">
-			<input type="submit" value="<?php printf( '%s %s', $editing ? _x( 'Update', 'edit object', 'atcf' ) : _x( 'Submit', 'submit object', 'atcf' ), edd_get_label_singular() ); ?>">
+			<input type="submit" value="<?php echo $editing ? sprintf( _x( 'Update %s', 'edit "campaign"', 'atcf' ), edd_get_label_singular() ) : sprintf( _x( 'Submit %s', 'submit "campaign"', 'atcf' ), edd_get_label_singular() ); ?>">
 			<input type="hidden" name="action" value="atcf-campaign-<?php echo $editing ? 'edit' : 'submit'; ?>" />
 			<?php wp_nonce_field( 'atcf-campaign-' . ( $editing ? 'edit' : 'submit' ) ); ?>
 		</p>
@@ -95,7 +95,7 @@ function atcf_shortcode_submit_field_goal( $editing, $campaign ) {
 ?>
 	<p class="atcf-submit-campaign-goal">
 		<label for="goal"><?php printf( __( 'Goal (%s)', 'atcf' ), edd_currency_filter( '' ) ); ?></label>
-		<input type="text" name="goal" id="goal" placeholder="800">
+		<input type="text" name="goal" id="goal" placeholder="<?php echo edd_format_amount( 800 ); ?>">
 	</p>
 <?php
 }
@@ -488,13 +488,13 @@ function atcf_shortcode_submit_process() {
 	$edd_files        = array();
 	$upload_overrides = array( 'test_form' => false );
 
-	$terms     = $_POST[ 'edd_agree_to_terms' ];
+	$terms     = isset ( $_POST[ 'edd_agree_to_terms' ] ) ? $_POST[ 'edd_agree_to_terms' ] : 0;
 	$title     = $_POST[ 'title' ];
 	$goal      = $_POST[ 'goal' ];
 	$length    = $_POST[ 'length' ];
 	$type      = $_POST[ 'campaign_type' ];
 	$location  = $_POST[ 'location' ];
-	$category  = $_POST[ 'cat' ];
+	$category  = isset ( $_POST[ 'cat' ] ) ? $_POST[ 'cat' ] : 0;
 	$content   = $_POST[ 'description' ];
 	$excerpt   = $_POST[ 'excerpt' ];
 	$author    = $_POST[ 'name' ];
@@ -521,7 +521,7 @@ function atcf_shortcode_submit_process() {
 		$errors->add( 'invalid-title', __( 'Please add a title to this campaign.', 'atcf' ) );
 
 	/** Check Goal */
-	$goal = atcf_sanitize_goal_save( $goal );
+	$goal = edd_sanitize_amount( $goal );
 
 	if ( ! is_numeric( $goal ) )
 		$errors->add( 'invalid-goal', sprintf( __( 'Please enter a valid goal amount. All goals are set in the %s currency.', 'atcf' ), $edd_options[ 'currency' ] ) );
@@ -689,7 +689,10 @@ add_action( 'template_redirect', 'atcf_shortcode_submit_process' );
 function atcf_shortcode_submit_redirect() {
 	global $edd_options, $post;
 
-	if ( ! is_user_logged_in() && ( $post->ID == $edd_options[ 'submit_page' ] ) && $edd_options[ 'atcf_settings_require_account' ] ) {
+	if ( ! is_a( $post, 'WP_Post' ) )
+		return;
+
+	if ( ! is_user_logged_in() && ( $post->ID == $edd_options[ 'submit_page' ] ) && isset ( $edd_options[ 'atcf_settings_require_account' ] ) ) {
 		$redirect = apply_filters( 'atcf_require_account_redirect', isset ( $edd_options[ 'login_page' ] ) ? get_permalink( $edd_options[ 'login_page' ] ) : home_url() );
 
 		wp_safe_redirect( $redirect );

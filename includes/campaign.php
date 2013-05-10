@@ -52,7 +52,7 @@ class ATCF_Campaigns {
 		
 		if ( ! is_admin() )
 			return;
-
+		
 		add_filter( 'edd_price_options_heading', 'atcf_edd_price_options_heading' );
 		add_filter( 'edd_variable_pricing_toggle_text', 'atcf_edd_variable_pricing_toggle_text' );
 
@@ -229,6 +229,9 @@ class ATCF_Campaigns {
 	function add_meta_boxes() {
 		global $post;
 
+		if ( ! is_object( $post ) )
+			return;
+
 		$campaign = atcf_get_campaign( $post );
 
 		if ( ! $campaign->is_collected() && ( 'flexible' == $campaign->type() || $campaign->is_funded() ) && atcf_has_preapproval_gateway() )
@@ -275,7 +278,7 @@ class ATCF_Campaigns {
 	 * @return void
 	 */
 	function collect_funds() {
-		global $edd_options;
+		global $edd_options, $errors;
 
 		$campaign = absint( $_GET[ 'campaign' ] );
 		$campaign = atcf_get_campaign( $campaign );
@@ -295,11 +298,16 @@ class ATCF_Campaigns {
 		$backers  = $campaign->backers();
 		$gateways = edd_get_enabled_payment_gateways(); 
 		$errors   = new WP_Error();
-		
+
+		if ( empty( $backers ) ) {
+			return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit', 'message' => 14 ), admin_url( 'post.php' ) ) );
+			exit();
+		}
+
 		foreach ( $backers as $backer ) {
 			$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
 			$gateway    = get_post_meta( $payment_id, '_edd_payment_gateway', true );
-			
+
 			$gateways[ $gateway ][ 'payments' ][] = $payment_id;
 		}
 
@@ -307,11 +315,12 @@ class ATCF_Campaigns {
 			do_action( 'atcf_collect_funds_' . $gateway, $gateway, $gateway_args, $campaign, $errors );
 		}
 
-		if ( ! empty ( $errors->errors ) ) // Not sure how to avoid empty instantiated WP_Error
+		if ( ! empty ( $errors->errors ) )
 			wp_die( $errors );
 		else {
-			update_post_meta( $campaign->ID, '_campaign_expired', 1 );
+			update_post_meta( $campaign->ID, '_campaign_expired', current_time( 'mysql' ) );
 			update_post_meta( $campaign->ID, '_campaign_bulk_collected', 1 );
+
 			return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit', 'message' => 13, 'collected' => $campaign->backers_count() ), admin_url( 'post.php' ) ) );
 			exit();
 		}
@@ -329,6 +338,7 @@ class ATCF_Campaigns {
 		$messages[ 'download' ][11] = sprintf( __( 'This %s has not reached its funding goal.', 'atcf' ), strtolower( edd_get_label_singular() ) );
 		$messages[ 'download' ][12] = sprintf( __( 'You do not have permission to collect funds for %s.', 'atcf' ), strtolower( edd_get_label_plural() ) );
 		$messages[ 'download' ][13] = sprintf( __( '%d payments have been collected for this %s.', 'atcf' ), isset ( $_GET[ 'collected' ] ) ? $_GET[ 'collected' ] : 0, strtolower( edd_get_label_singular() ) );
+		$messages[ 'download' ][14] = sprintf( __( 'There are no payments for this %s.', 'atcf' ), strtolower( edd_get_label_singular() ) );
 
 		return $messages;
 	}
@@ -643,19 +653,7 @@ function _atcf_metabox_campaign_info() {
  *
  * @return string $price The formatted price
  */
-function atcf_sanitize_goal_save( $price ) {
-	global $edd_options;
-
-	$thousands_sep = isset( $edd_options[ 'thousands_separator' ] ) ? $edd_options[ 'thousands_separator' ] : ',';
-	$decimal_sep   = isset( $edd_options[ 'decimal_separator'   ] ) ? $edd_options[ 'decimal_separator' ]   : '.';
-
-	if ( $thousands_sep == ',' ) {
-		$price = str_replace( ',', '', $price );
-	}
-
-	return $price;
-}
-add_filter( 'edd_metabox_save_campaign_goal', 'atcf_sanitize_goal_save' );
+add_filter( 'edd_metabox_save_campaign_goal', 'edd_sanitize_price_save' );
 
 /**
  * Updates Save
@@ -901,7 +899,7 @@ class ATCF_Campaign {
 				} else
 					$price_id = $item[ 'price' ];
 
-				$totals[$price_id] = $totals[$price_id] + 1;
+				$totals[$price_id] = isset ( $totals[$price_id] ) ? $totals[$price_id] + 1 : 1;
 			}
 		}
 
@@ -919,7 +917,7 @@ class ATCF_Campaign {
 	 */
 	public function days_remaining() {
 		$expires = strtotime( $this->end_date() );
-		$now     = time();
+		$now     = current_time( 'timestamp' );
 
 		if ( $now > $expires )
 			return 0;
@@ -1004,7 +1002,10 @@ class ATCF_Campaign {
 	public function is_active() {
 		$active  = true;
 
-		if ( $this->days_remaining() == 0 )
+		$expires = strtotime( $this->end_date() );
+		$now     = current_time( 'timestamp' );
+
+		if ( $now > $expires )
 			$active = false;
 
 		if ( $this->__get( '_campaign_expired' ) )
