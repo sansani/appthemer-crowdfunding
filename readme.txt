@@ -28,7 +28,7 @@ Note: The Astoundify Crowdfunding plugin is designed to work alongside the PayPa
 Features of the plugin include:
 
 * Crowd fund anything you want!
-* Frontend form submission to easily collect campaign information.
+* Front-end form submission to easily collect campaign information.
 * Compatible with Stripe & PayPal Adaptive Payments API for pre-approved purchases. When a person commits to funding your project they are only charged if your campaign reaches its pre-defined goal.
 * Compatible with all standard payment gateways that Easy Digital Downloads supports, i.e Stripe, PayPal Pro/Express (payments will be charged immediately).
 * Works both as a donation plugin and a Crowdfunding plugin.
