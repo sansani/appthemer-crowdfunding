@@ -28,7 +28,7 @@ Note: The Astoundify Crowdfunding plugin is designed to work alongside the PayPa
 Features of the plugin include:
 
 * Crowd fund anything you want!
-* Front-end form submission to easily collect campaign information.
+* Frontend form submission to easily collect campaign information.
 * Compatible with Stripe & PayPal Adaptive Payments API for pre-approved purchases. When a person commits to funding your project they are only charged if your campaign reaches its pre-defined goal.
 * Compatible with all standard payment gateways that Easy Digital Downloads supports, i.e Stripe, PayPal Pro/Express (payments will be charged immediately).
 * Works both as a donation plugin and a Crowdfunding plugin.
@@ -38,9 +38,8 @@ Features of the plugin include:
 
 We currently have two compatible themes that have been released:
 
-The first theme released is called "Fundify" from [Astoundify](http://Astoundify.com/fundify.html) A large community crowdfunding theme, like Kickstarter or Indiegogo.
-
-The second theme released is called "Campaignify" from [Astoundify](http://Astoundify.com/) A multi-purpose crowdfunding theme, great for single product crowdfunding.
+* The first theme released is called "Fundify" from [Astoundify](http://Astoundify.com/fundify.html) A large community crowdfunding theme, like Kickstarter or Indiegogo.
+* The second theme released is called "Campaignify" from [Astoundify](http://Astoundify.com/) A multi-purpose crowdfunding theme, great for single project crowdfunding.
 
 = Get Involved =
 
