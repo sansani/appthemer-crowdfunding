@@ -57,7 +57,7 @@ function atcf_purchase_variable_pricing( $download_id ) {
 
 	do_action( 'atcf_campaign_contribute_options', $prices, $type, $download_id );
 
-	add_action( 'edd_after_price_options', $download_id );
+	do_action( 'edd_after_price_options', $download_id );
 }
 
 /**
@@ -135,3 +135,19 @@ function atcf_campaign_notes( $campaign ) {
 	}
 }
 add_action( 'atcf_campaign_before', 'atcf_campaign_notes' );
+
+function atcf_campaign_preview_note() {
+	global $post;
+
+	if ( ! is_preview() )
+		return;
+?>
+	<div class="edd_errors">
+		<p class="edd_error"><?php printf( __( 'This is a preview of your %1$s. <a href="%2$s">Edit</a>', 'atcf' ), strtolower( edd_get_label_singular() ), add_query_arg( array( 'edit' => true ), get_permalink( $post->ID ) ) ); ?></p>
+	</div>
+<?php
+}
+add_action( 'atcf_campaign_before', 'atcf_campaign_preview_note' );
+
+add_action( 'atcf_campaign_before', 'edd_print_errors' );
+add_action( 'atcf_shortcode_submit_hidden', 'edd_print_errors' );
