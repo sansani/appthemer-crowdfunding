@@ -323,7 +323,7 @@ function atcf_shortcode_submit_field_images( $atts, $campaign ) {
 		return;
 ?>
 	<p class="atcf-submit-campaign-images">
-		<label for="excerpt"><?php _e( 'Featuerd Image', 'atcf' ); ?></label>
+		<label for="excerpt"><?php _e( 'Featured Image', 'atcf' ); ?></label>
 		<input type="file" name="image" id="image" />
 
 		<?php if ( $atts[ 'editing' ] || $atts[ 'previewing' ] ) : ?>
@@ -348,7 +348,7 @@ function atcf_shortcode_submit_field_video( $atts, $campaign ) {
 	$video = $atts[ 'editing' ] || $atts[ 'previewing' ] ? $campaign->video() : null;
 ?>
 	<p class="atcf-submit-campaign-video">
-		<label for="length"><?php _e( 'Featued Video URL', 'atcf' ); ?></label>
+		<label for="length"><?php _e( 'Featured Video URL', 'atcf' ); ?></label>
 		<input type="text" name="video" id="video" value="<?php echo esc_attr( $video ); ?>">
 	</p>
 <?php
@@ -510,9 +510,6 @@ add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_locatio
  * @return void
  */
 function atcf_shortcode_submit_field_terms( $atts, $campaign ) {
-	if ( $atts[ 'editing' ] || $atts[ 'previewing' ] )
-		return;
-	
 	edd_agree_to_terms_js();
 	edd_terms_agreement();
 }
