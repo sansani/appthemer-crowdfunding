@@ -107,8 +107,12 @@ function atcf_registration_handle() {
 		$errors->add( 'taken-email', __( 'That contact email address already exists.', 'atcf' ) );
 
 	/** Check Password */
-	if ( empty( $email ) || ! is_email( $email ) )
+	if ( empty( $register ) )
 		$errors->add( 'invalid-password', __( 'Please choose a secure password.', 'atcf' ) );
+
+	/** Check Username */
+	if ( ! empty( $username ) && username_exists( $username ) )
+		$errors->add( 'username-exists', __( 'Sorry, this username is already taken.', 'atcf' ) );
 
 	$errors = apply_filters( 'atcf_register_validate', $errors, $_POST );
 

@@ -64,7 +64,7 @@ function atcf_shortcode_submit( $atts ) {
 
 			<?php if ( is_user_logged_in() && ! $atts[ 'editing' ] ) : ?>
 			<button type="submit" name="submit" value="preview" class="button button-secondary">
-				<?php _e( 'Save and Preview', 'atcf' ); ?>
+				<?php _e( 'Preview', 'atcf' ); ?>
 			</button>
 			<?php endif; ?>
 
@@ -147,13 +147,19 @@ function atcf_shortcode_submit_field_length( $atts, $campaign ) {
 	$min = isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14;
 	$max = isset ( $edd_options[ 'atcf_campaign_length_max' ] ) ? $edd_options[ 'atcf_campaign_length_max' ] : 48;
 
-	$start = apply_filters( 'atcf_shortcode_submit_field_length_start', round( ( $min + $max ) / 2 ) );
+	$length = apply_filters( 'atcf_shortcode_submit_field_length_start', round( ( $min + $max ) / 2 ) );
 
-	$length = $atts[ 'previewing' ] ? $campaign->days_remaining() : null;
+	$length = $atts[ 'previewing' ] ? $campaign->days_remaining() : $length;
 ?>
 	<p class="atcf-submit-campaign-length">
-		<label for="length"><?php _e( 'Length (Days)', 'atcf' ); ?></label>
-		<input type="number" min="<?php echo esc_attr( $min ); ?>" max="<?php echo esc_attr( $max ); ?>" step="1" name="length" id="length" value="<?php echo esc_attr( $start ); ?>" value="<?php echo esc_attr( $length ); ?>">
+		<label for="length">
+			<?php _e( 'Length (Days)', 'atcf' ); ?>
+
+			<?php if ( ! atcf_has_preapproval_gateway() ) : ?>
+				<a href="#" class="atcf-toggle-neverending"><?php _e( 'No End Date', 'atcf' ); ?></a>
+			<?php endif; ?>
+		</label>
+		<input type="number" min="<?php echo esc_attr( $min ); ?>" max="<?php echo esc_attr( $max ); ?>" step="1" name="length" id="length" value="<?php echo esc_attr( $length ); ?>">
 	</p>
 <?php
 }
@@ -169,8 +175,11 @@ add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_length'
 function atcf_shortcode_submit_field_type( $atts, $campaign ) {
 	global $edd_options;
 
-	if ( $atts[ 'editing' ]  )
+	if ( $atts[ 'editing' ]  ) {
+		echo '<input type="hidden" name="campaign_type" value="' . $campaign->type() . '" />';
+
 		return;
+	}
 
 	$type  = $atts[ 'previewing' ] ? $campaign->type() : atcf_campaign_type_default();
 	$types = atcf_campaign_types_active();
@@ -348,7 +357,7 @@ function atcf_shortcode_submit_field_video( $atts, $campaign ) {
 	$video = $atts[ 'editing' ] || $atts[ 'previewing' ] ? $campaign->video() : null;
 ?>
 	<p class="atcf-submit-campaign-video">
-		<label for="length"><?php _e( 'Featured Video URL', 'atcf' ); ?></label>
+		<label for="video"><?php _e( 'Featured Video URL', 'atcf' ); ?></label>
 		<input type="text" name="video" id="video" value="<?php echo esc_attr( $video ); ?>">
 	</p>
 <?php
@@ -381,17 +390,18 @@ function atcf_shortcode_submit_field_rewards( $atts, $campaign ) {
 
 			<p class="atcf-submit-campaign-reward-price">
 				<label for="rewards[<?php echo esc_attr( $key ); ?>][price]"><?php printf( __( 'Amount (%s)', 'atcf' ), edd_currency_filter( '' ) ); ?></label>
-				<input class="name" type="text" name="rewards[<?php echo esc_attr( $key ); ?>][price]" id="rewards[<?php echo esc_attr( $key ); ?>][price]" value="<?php echo esc_attr( $reward[ 'amount' ] ); ?>" <?php disabled(true, $disabled); ?> />
+				<input class="name" type="text" name="rewards[<?php echo esc_attr( $key ); ?>][price]" id="rewards[<?php echo esc_attr( $key ); ?>][price]" value="<?php echo esc_attr( $reward[ 'amount' ] ); ?>" <?php if ( $disabled ) : ?>readonly="readonly"<?php endif; ?> />
 			</p>
 
 			<p class="atcf-submit-campaign-reward-description">
 				<label for="rewards[<?php echo esc_attr( $key ); ?>][description]"><?php _e( 'Reward', 'atcf' ); ?></label>
-				<input class="description" type="text" name="rewards[<?php echo esc_attr( $key ); ?>][description]" id="rewards[<?php echo esc_attr( $key ); ?>][description]" rows="3" value="<?php echo esc_attr( $reward[ 'name' ] ); ?>" <?php disabled(true, $disabled); ?> />
+				<input class="description" type="text" name="rewards[<?php echo esc_attr( $key ); ?>][description]" id="rewards[<?php echo esc_attr( $key ); ?>][description]" rows="3" value="<?php echo esc_attr( $reward[ 'name' ] ); ?>" <?php if ( $disabled ) : ?>readonly="readonly"<?php endif; ?> />
 			</p>
 
 			<p class="atcf-submit-campaign-reward-limit">
 				<label for="rewards[<?php echo esc_attr( $key ); ?>][limit]"><?php _e( 'Limit', 'atcf' ); ?></label>
-				<input class="description" type="text" name="rewards[<?php echo esc_attr( $key ); ?>][limit]" id="rewards[<?php echo esc_attr( $key ); ?>][limit]" value="<?php echo isset ( $reward[ 'limit' ] ) ? esc_attr( $reward[ 'limit' ] ) : null; ?>" <?php disabled(true, $disabled); ?> />
+				<input class="description" type="text" name="rewards[<?php echo esc_attr( $key ); ?>][limit]" id="rewards[<?php echo esc_attr( $key ); ?>][limit]" value="<?php echo isset ( $reward[ 'limit' ] ) ? esc_attr( $reward[ 'limit' ] ) : null; ?>" <?php if ( $disabled ) : ?>readonly="readonly"<?php endif; ?> />
+				<input type="hidden" name="rewards[<?php echo esc_attr( $key ); ?>][bought]" id="rewards[<?php echo esc_attr( $key ); ?>][bought]" value="<?php echo isset ( $reward[ 'bought' ] ) ? esc_attr( $reward[ 'bought' ] ) : null; ?>" />
 			</p>
 
 			<?php do_action( 'atcf_shortcode_submit_field_rewards_after' ); ?>
@@ -495,7 +505,7 @@ add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_author'
 function atcf_shortcode_submit_field_location( $atts, $campaign ) {
 ?>
 	<p class="atcf-submit-campaign-location">
-		<label for="length"><?php _e( 'Location', 'atcf' ); ?></label>
+		<label for="location"><?php _e( 'Location', 'atcf' ); ?></label>
 		<input type="text" name="location" id="location" value="<?php echo $atts[ 'editing' ] || $atts[ 'previewing' ] ? $campaign->location() : null; ?>" />
 	</p>
 <?php
@@ -616,6 +626,8 @@ function atcf_shortcode_submit_process() {
 	
 		$end_date = strtotime( sprintf( '+%d day', $length ) );
 		$end_date = get_gmt_from_date( date( 'Y-m-d H:i:s', $end_date ) );
+	} else {
+		$end_date = null;
 	}
 
 	/** Check Category */
@@ -699,8 +711,10 @@ function atcf_shortcode_submit_process() {
 	if ( $c_email )
 		update_post_meta( $campaign, 'campaign_contact_email', sanitize_text_field( $c_email ) );
 	
-	if ( $length )
+	if ( $end_date )
 		update_post_meta( $campaign, 'campaign_end_date', sanitize_text_field( $end_date ) );
+	else
+		update_post_meta( $campaign, 'campaign_endless', 1 );
 	
 	if ( $location )
 		update_post_meta( $campaign, 'campaign_location', sanitize_text_field( $location ) );
@@ -723,7 +737,8 @@ function atcf_shortcode_submit_process() {
 		$prices[] = array(
 			'name'   => sanitize_text_field( $reward[ 'description' ] ),
 			'amount' => apply_filters( 'edd_metabox_save_edd_price', $reward[ 'price' ] ),
-			'limit'  => sanitize_text_field( $reward[ 'limit' ] )
+			'limit'  => sanitize_text_field( $reward[ 'limit' ] ),
+			'bought' => isset ( $reward[ 'bought' ] ) ? sanitize_text_field( $reward[ 'bought' ] ) : 0
 		);
 	}
 
@@ -786,8 +801,11 @@ function atcf_shortcode_submit_redirect() {
 	if ( ! is_a( $post, 'WP_Post' ) )
 		return;
 
-	if ( ! is_user_logged_in() && ( $post->ID == $edd_options[ 'submit_page' ] ) && isset ( $edd_options[ 'atcf_settings_require_account' ] ) ) {
-		$redirect = apply_filters( 'atcf_require_account_redirect', isset ( $edd_options[ 'login_page' ] ) ? get_permalink( $edd_options[ 'login_page' ] ) : home_url() );
+	if ( ! is_user_logged_in() && ( isset( $edd_options[ 'submit_page' ] ) && $post->ID == $edd_options[ 'submit_page' ] ) && isset ( $edd_options[ 'atcf_settings_require_account' ] ) ) {
+		$url = isset ( $edd_options[ 'login_page' ] ) ? get_permalink( $edd_options[ 'login_page' ] ) : home_url();
+		$url = add_query_arg( array( 'redirect_to' => get_permalink( $edd_options[ 'submit_page' ] ) ), $url );
+
+		$redirect = apply_filters( 'atcf_require_account_redirect', $url );
 
 		wp_safe_redirect( $redirect );
 		exit();
