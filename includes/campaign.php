@@ -8,7 +8,7 @@
  * ATCF_Campaigns - Mostly admin things, and changing some settings of EDD
  * ATCF_Campaign  - A singular campaign. Includes getter methods for accessing a single campaign's info
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  */
 
 // Exit if accessed directly
@@ -24,7 +24,7 @@ class ATCF_Campaigns {
 	/**
 	 * Start things up.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -37,7 +37,7 @@ class ATCF_Campaigns {
 	 *
 	 * Set the archive slug, and remove formatting from prices.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -70,7 +70,10 @@ class ATCF_Campaigns {
 		add_action( 'edd_download_price_table_head', 'atcf_pledge_limit_head' );
 		add_action( 'edd_download_price_table_row', 'atcf_pledge_limit_column', 10, 3 );
 
+		add_action( 'edd_after_price_field', 'atcf_after_price_field' );
+
 		add_action( 'admin_action_atcf-collect-funds', array( $this, 'collect_funds' ) );
+		add_action( 'admin_action_atcf-reinstate', array( $this, 'reinstate' ) );
 		add_filter( 'post_updated_messages', array( $this, 'messages' ) );
 
 		do_action( 'atcf_campaigns_actions_admin' );
@@ -79,7 +82,7 @@ class ATCF_Campaigns {
 	/**
 	 * Download labels. Change it to "Campaigns".
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $labels The preset labels
 	 * @return array $labels The modified labels
@@ -107,7 +110,7 @@ class ATCF_Campaigns {
 	/**
 	 * Further change "Download" & "Downloads" to "Campaign" and "Campaigns"
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $labels The preset labels
 	 * @return array $labels The modified labels
@@ -126,7 +129,7 @@ class ATCF_Campaigns {
 	/**
 	 * Add excerpt support for downloads.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $supports The post type supports
 	 * @return array $supports The modified post type supports
@@ -150,7 +153,7 @@ class ATCF_Campaigns {
 	 *
 	 * Add "Amount Funded" and "Expires" to the main campaign table listing. 
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $supports The post type supports
 	 * @return array $supports The modified post type supports
@@ -171,7 +174,7 @@ class ATCF_Campaigns {
 	/**
 	 * Download Column Items
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $supports The post type supports
 	 * @return array $supports The modified post type supports
@@ -205,7 +208,7 @@ class ATCF_Campaigns {
 	 * Remove some metaboxes that we don't need to worry about. Sales
 	 * and download stats, aren't really important. 
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -231,7 +234,7 @@ class ATCF_Campaigns {
 	 * As well as some other information plugged into EDD in the Download Configuration
 	 * metabox that already exists.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -252,6 +255,10 @@ class ATCF_Campaigns {
 		)
 			add_meta_box( 'atcf_campaign_funds', __( 'Campaign Funds', 'atcf' ), '_atcf_metabox_campaign_funds', 'download', 'side', 'high' );
 
+		if ( $campaign->is_collected() && ! $campaign->failed_payments() ) {
+			add_meta_box( 'atcf_campaign_reinstate', __( 'Reinstate Campaign', 'atcf' ), '_atcf_metabox_campaign_reinstate', 'download', 'side', 'high' );
+		}
+
 		add_meta_box( 'atcf_campaign_stats', __( 'Campaign Stats', 'atcf' ), '_atcf_metabox_campaign_stats', 'download', 'side', 'high' );
 		add_meta_box( 'atcf_campaign_updates', __( 'Campaign Updates', 'atcf' ), '_atcf_metabox_campaign_updates', 'download', 'normal', 'high' );
 
@@ -267,7 +274,7 @@ class ATCF_Campaigns {
 	 * Hook in to EDD and add a few more things that will be saved. Use
 	 * this so we are already cleared/validated.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $fields An array of fields to save
 	 * @return array $fields An updated array of fields to save
@@ -279,6 +286,7 @@ class ATCF_Campaigns {
 		$fields[] = 'campaign_contact_email';
 		$fields[] = 'campaign_end_date';
 		$fields[] = 'campaign_endless';
+		$fields[] = 'campaign_norewards';
 		$fields[] = 'campaign_video';
 		$fields[] = 'campaign_location';
 		$fields[] = 'campaign_author';
@@ -291,7 +299,7 @@ class ATCF_Campaigns {
 	/**
 	 * Collect Funds
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -322,24 +330,19 @@ class ATCF_Campaigns {
 			exit();
 		}
 
-		$existing_failed_payments = $campaign->failed_payments();
+		
+		foreach ( $backers as $backer ) {
+			$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
+			$gateway    = get_post_meta( $payment_id, '_edd_payment_gateway', true );
 
-		/**
-		 * If failed payments exist, this has been run before, so go through those instead
-		 */
-		if ( $existing_failed_payments && is_array( $existing_failed_payments ) )
-			$process = $existing_failed_payments;
-		else {
-			foreach ( $backers as $backer ) {
-				$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
-				$gateway    = get_post_meta( $payment_id, '_edd_payment_gateway', true );
+			if ( 'publish' == get_post_field( 'post_status', $payment_id ) || ! $payment_id )
+				continue;
 
-				$gateways[ $gateway ][ 'payments' ][] = $payment_id;
-			}
-
-			$process = $gateways;
+			$gateways[ $gateway ][ 'payments' ][] = $payment_id;
 		}
 
+		$process = $gateways;
+		
 		foreach ( $process as $gateway => $gateway_args ) {
 			do_action( 'atcf_collect_funds_' . $gateway, $gateway, $gateway_args, $campaign, $failed_payments );
 		}
@@ -347,12 +350,10 @@ class ATCF_Campaigns {
 		if ( ! empty( $failed_payments ) ) {
 			$failed_count = 0;
 
-			foreach ( $failed_payments as $gateway ) {
-				$_gateway = $gateway;
-
+			foreach ( $failed_payments as $gateway => $payments ) {
 				/** Loop through each gateway's failed payments */
-				foreach ( $gateway as $payment_id ) {
-					edd_insert_payment_note( $payment_id, apply_filters( 'atcf_failed_payment_note', sprintf( __( 'Error processing preapproved payment via %s', 'atcf' ), edd_get_gateway_admin_label( $_gateway ) ) ) );
+				foreach ( $payments[ 'payments' ] as $payment_id ) {
+					edd_insert_payment_note( $payment_id, apply_filters( 'atcf_failed_payment_note', sprintf( __( 'Error processing preapproved payment via %s when collecting funds.', 'atcf' ), $gateway ) ) );
 
 					$failed_count++;
 
@@ -376,9 +377,42 @@ class ATCF_Campaigns {
 	}
 
 	/**
+	 * Reinstate Campaign
+	 *
+	 * @since Astoundify Crowdfunding 1.5
+	 *
+	 * @return void
+	 */
+	function reinstate() {
+		global $edd_options;
+
+		$campaign = absint( $_GET[ 'campaign' ] );
+		$campaign = atcf_get_campaign( $campaign );
+
+		/** check nonce */
+		if ( ! check_admin_referer( 'atcf-reinstate' ) ) {
+			return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit' ), admin_url( 'post.php' ) ) );
+			exit();
+		}
+
+		/** check roles */
+		if ( ! current_user_can( 'update_core' ) ) {
+			return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit' ), admin_url( 'post.php' ) ) );
+			exit();
+		}
+
+		delete_post_meta( $campaign->ID, '_campaign_bulk_collected' );
+		delete_post_meta( $campaign->ID, '_campaign_failed_payments' );
+		delete_post_meta( $campaign->ID, '_campaign_expired' );
+
+		return wp_safe_redirect( add_query_arg( array( 'post' => $campaign->ID, 'action' => 'edit' ), admin_url( 'post.php' ) ) );
+		exit();
+	}
+
+	/**
 	 * Custom messages for various actions when managing campaigns.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $messages An array of messages to display
 	 * @return array $messages An updated array of messages to display
@@ -400,7 +434,7 @@ class ATCF_Campaigns {
  * A hidden/fake input field so the filter is triggered, then
  * add all the other date fields together to create the MySQL date.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @param string $date
  * @return string $end_date Formatted date
@@ -448,7 +482,7 @@ function atcf_campaign_save_end_date( $new ) {
 /**
  * Price row head
  *
- * @since Appthemer CrowdFunding 0.9
+ * @since Astoundify Crowdfunding 0.9
  *
  * @return void
  */
@@ -462,7 +496,7 @@ function atcf_pledge_limit_head() {
 /**
  * Price row columns
  *
- * @since Appthemer CrowdFunding 0.9
+ * @since Astoundify Crowdfunding 0.9
  *
  * @return void
  */
@@ -480,7 +514,7 @@ function atcf_pledge_limit_column( $post_id, $key, $args ) {
 /**
  * Price row fields
  *
- * @since Appthemer CrowdFunding 0.9
+ * @since Astoundify Crowdfunding 0.9
  *
  * @return void
  */
@@ -497,7 +531,7 @@ add_filter( 'edd_price_row_args', 'atcf_price_row_args', 10, 2 );
  *
  * These are read-only stats/info for the current campaign.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @return void
  */
@@ -532,7 +566,7 @@ function _atcf_metabox_campaign_stats() {
  * If a campaign is fully funded (or expired and fully funded) show this box.
  * Includes a button to collect funds.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @return void
  */
@@ -560,14 +594,52 @@ function _atcf_metabox_campaign_funds() {
 	<?php endif; ?>
 
 	<?php if ( $failed_payments ) : ?>
-	<p><strong><?php printf( _n( '%d payment failed to process.', '%d payments failed to process.', $count, 'atcf' ), $count ); ?></strong> <a href="<?php echo esc_url( add_query_arg( array( 'page' => 'edd-reports', 'tab' => 'logs', 'view' => 'gateway_errors', 'post_type' => 'download' ), admin_url( 'edit.php' ) ) ); ?>"><?php _e( 'View gateway errors', 'atcf' ); ?></a>.</p>
+		<p><strong><?php printf( _n( '%d payment failed to process.', '%d payments failed to process.', $count, 'atcf' ), $count ); ?></strong> <a href="<?php echo esc_url( add_query_arg( array( 'page' => 'edd-reports', 'tab' => 'logs', 'view' => 'gateway_errors', 'post_type' => 'download' ), admin_url( 'edit.php' ) ) ); ?>"><?php _e( 'View gateway errors', 'atcf' ); ?></a>.</p>
+
+		<ul>
+		<?php foreach ( $failed_payments as $gateway => $payments ) : ?>
+			<li><strong><?php echo edd_get_gateway_admin_label( $gateway ); ?></strong>
+
+				<ul>
+					<?php foreach ( $payments[ 'payments' ] as $payment ) : ?>
+						<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=download&page=edd-payment-history&view=edit-payment&purchase_id=' . $payment ) ); ?>">#<?php echo $payment; ?></a></li>
+					<?php endforeach; ?>
+				</ul>
+			</li>
+		<?php endforeach; ?>
+		</ul>
 	<?php endif; ?>
 
 	<?php if ( ! apply_filters( 'atcf_hide_collect_funds_button', false ) ) : ?>
-	<p><a href="<?php echo wp_nonce_url( add_query_arg( array( 'action' => 'atcf-collect-funds', 'campaign' => $campaign->ID ), admin_url() ), 'atcf-collect-funds' ); ?>" class="button button-primary"><?php echo $failed_payments ? __( 'Collect Failed Payments', 'atcf' ) : __( 'Collect Funds', 'atcf' ); ?></a></p>
+	<p><a href="<?php echo wp_nonce_url( add_query_arg( array( 'action' => 'atcf-collect-funds', 'campaign' => $campaign->ID ), admin_url() ), 'atcf-collect-funds' ); ?>" class="button button-primary"><?php _e( 'Collect Funds', 'atcf' ); ?></a></p>
 	<?php endif; ?>
 <?php
 	do_action( 'atcf_metabox_campaign_funds_after', $campaign );
+}
+
+/**
+ * Reinstate Campaign Box
+ *
+ * If a campaign has collected funds, but wants to run again, show a button.
+ * This still requires updating expiration information, etc, and can only done
+ * by teh admin.
+ *
+ * @since Astoundify Crowdfunding 1.5
+ *
+ * @return void
+ */
+function _atcf_metabox_campaign_reinstate() {
+	global $post;
+
+	$campaign = atcf_get_campaign( $post );
+	
+	do_action( 'atcf_metabox_campaign_reinstate_before', $campaign );
+?>
+	<p><a href="<?php echo wp_nonce_url( add_query_arg( array( 'action' => 'atcf-reinstate', 'campaign' => $campaign->ID ), admin_url() ), 'atcf-reinstate' ); ?>" class="button button-primary"><?php _e( 'Reinstate Campaign', 'atcf' ); ?></a></p>
+
+	<p><?php _e( '<strong>Note:</strong> This will only allow funds to be collected again. All dates, etc must manually be updated.', 'atcf' ); ?></p>
+<?php
+	do_action( 'atcf_metabox_campaign_reinstate_after', $campaign );
 }
 
 /**
@@ -575,7 +647,7 @@ function _atcf_metabox_campaign_funds() {
  *
  * oEmbed campaign video.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @return void
  */
@@ -595,7 +667,7 @@ function _atcf_metabox_campaign_video() {
 /**
  * Campaign Updates Box
  *
- * @since Appthemer CrowdFunding 0.9
+ * @since Astoundify Crowdfunding 0.9
  *
  * @return void
  */
@@ -619,7 +691,7 @@ function _atcf_metabox_campaign_updates() {
  * These are all things that can be updated while the campaign runs/before
  * being published.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @return void
  */
@@ -731,12 +803,25 @@ function _atcf_metabox_campaign_info() {
 	do_action( 'atcf_metabox_campaign_info_after', $campaign );
 }
 
+function atcf_after_price_field() {
+	global $post;
+
+	$campaign = atcf_get_campaign( $post );
+?>
+	<p>
+		<label for="campaign_norewards">
+			<input type="checkbox" name="campaign_norewards" id="campaign_norewards" value="1" <?php checked( 1, $campaign->is_donations_only() ); ?>> <?php printf( __( 'This %s is donations only (no rewards)', 'atcf' ), strtolower( edd_get_label_singular() ) ); ?>
+		</label>
+	</p>
+<?php
+}
+
 /**
  * Goal Save
  *
  * Sanitize goal before it is saved, to remove commas.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @return string $price The formatted price
  */
@@ -747,7 +832,7 @@ add_filter( 'edd_metabox_save_campaign_goal', 'edd_sanitize_price_save' );
  *
  * EDD trys to escape this data, and we don't want that.
  *
- * @since Appthemer CrowdFunding 0.9
+ * @since Astoundify Crowdfunding 0.9
  */
 function atcf_sanitize_campaign_updates( $updates ) {
 	$updates = $_POST[ 'campaign_updates' ];
@@ -758,9 +843,38 @@ function atcf_sanitize_campaign_updates( $updates ) {
 add_filter( 'edd_metabox_save_campaign_updates', 'atcf_sanitize_campaign_updates' );
 
 /**
+ * Updates Save
+ *
+ * EDD trys to escape this data, and we don't want that.
+ *
+ * @since Astoundify Crowdfunding 0.9
+ */
+function atcf_save_variable_prices_norewards( $prices ) {
+	$norewards = isset ( $_POST[ 'campaign_norewards' ] ) ? true : false;
+	
+	if ( ! $norewards )
+		return $prices;
+
+	if ( 1 == count( $prices ) && $norewards )
+		return $prices;
+
+	$prices = array();
+
+	$prices[0] = array(
+		'name'   => apply_filters( 'atcf_default_no_rewards_name', __( 'Donation', 'atcf' ) ),
+		'amount' => 0,
+		'limit'  => null,
+		'bought' => 0
+	);
+
+	return $prices;
+}
+add_filter( 'edd_metabox_save_edd_variable_prices', 'atcf_save_variable_prices_norewards' );
+
+/**
  * Load Admin Scripts
  *
- * @since AppThemer Crowdfunding 1.3
+ * @since Astoundify Crowdfunding 1.3
  *
  * @return void
  */
@@ -793,7 +907,7 @@ class ATCF_Campaign {
 	/**
 	 * Getter
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param string $key The meta key to fetch
 	 * @return string $meta The fetched value
@@ -807,7 +921,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Featured
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return sting Campaign Featured
 	 */
@@ -818,7 +932,7 @@ class ATCF_Campaign {
 	/**
 	 * Needs Shipping
 	 *
-	 * @since Appthemer CrowdFunding 0.9
+	 * @since Astoundify Crowdfunding 0.9
 	 *
 	 * @return sting Requires Shipping
 	 */
@@ -831,7 +945,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Goal
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param boolean $formatted Return formatted currency or not
 	 * @return sting $goal A goal amount (formatted or not)
@@ -851,7 +965,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Type
 	 *
-	 * @since Appthemer CrowdFunding 0.7
+	 * @since Astoundify Crowdfunding 0.7
 	 *
 	 * @return string $type The type of campaign
 	 */
@@ -867,7 +981,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Location
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return sting Campaign Location
 	 */
@@ -878,7 +992,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Author
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return sting Campaign Author
 	 */
@@ -889,7 +1003,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Contact Email
 	 *
-	 * @since Appthemer CrowdFunding 0.5
+	 * @since Astoundify Crowdfunding 0.5
 	 *
 	 * @return sting Campaign Contact Email
 	 */
@@ -900,7 +1014,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign End Date
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return sting Campaign End Date
 	 */
@@ -911,7 +1025,7 @@ class ATCF_Campaign {
 	/**
 	 * Is Endless
 	 *
-	 * @since Appthemer CrowdFunding 1.4
+	 * @since Astoundify Crowdfunding 1.4
 	 *
 	 * @return boolean
 	 */
@@ -920,9 +1034,20 @@ class ATCF_Campaign {
 	}
 
 	/**
+	 * Is donations only.
+	 *
+	 * @since Astoundify Crowdfunding 1.5
+	 *
+	 * @return boolean
+	 */
+	public function is_donations_only() {
+		return $this->__get( 'campaign_norewards' );
+	}
+
+	/**
 	 * Campaign Video
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return sting Campaign Video
 	 */
@@ -933,7 +1058,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Updates
 	 *
-	 * @since Appthemer CrowdFunding 0.9
+	 * @since Astoundify Crowdfunding 0.9
 	 *
 	 * @return sting Campaign Updates
 	 */
@@ -947,7 +1072,7 @@ class ATCF_Campaign {
 	 * Use EDD logs to get all sales. This includes both preapproved
 	 * payments (if they have Plugin installed) or standard payments.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return sting Campaign Backers
 	 */
@@ -970,7 +1095,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Backers Count
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return int Campaign Backers Count
 	 */
@@ -995,7 +1120,7 @@ class ATCF_Campaign {
 	 * a counter for each price point, so they can be displayed elsewhere. 
 	 * Not 100% because keys can change in EDD, but it's the best way I think.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return array $totals The number of backers for each price point
 	 */
@@ -1039,7 +1164,7 @@ class ATCF_Campaign {
 	 *
 	 * Calculate the end date, minus today's date, and output a number.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return int The number of days remaining
 	 */
@@ -1065,7 +1190,7 @@ class ATCF_Campaign {
 	 *
 	 * Calculate the end date, minus today's date, and output a number.
 	 *
-	 * @since Appthemer CrowdFunding 1.4
+	 * @since Astoundify Crowdfunding 1.4
 	 *
 	 * @return int The hours remaining
 	 */
@@ -1091,7 +1216,7 @@ class ATCF_Campaign {
 	 *
 	 * MATH!
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param boolean $formatted Return formatted currency or not
 	 * @return sting $percent The percent completed (formatted with a % or not)
@@ -1115,7 +1240,7 @@ class ATCF_Campaign {
 	/**
 	 * Current amount funded.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param boolean $formatted Return formatted currency or not
 	 * @return sting $total The amount funded (currency formatted or not)
@@ -1153,7 +1278,7 @@ class ATCF_Campaign {
 	 * Check if the campaign has expired based on time, or it has
 	 * manually been expired (via meta)
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return boolean
 	 */
@@ -1184,7 +1309,7 @@ class ATCF_Campaign {
 	 * When funds are collected in bulk, remember that, so we can end the
 	 * campaign, and not repeat things.
 	 *
-	 * @since Appthemer CrowdFunding 0.3-alpha
+	 * @since Astoundify Crowdfunding 0.3-alpha
 	 *
 	 * @return boolean
 	 */
@@ -1195,7 +1320,7 @@ class ATCF_Campaign {
 	/**
 	 * Campaign Funded
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return boolean
 	 */
@@ -1216,7 +1341,7 @@ function atcf_get_campaign( $campaign ) {
 /**
  * Price Options Heading
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @param string $heading Price options heading
  * @return string Modified price options heading
@@ -1228,7 +1353,7 @@ function atcf_edd_price_options_heading( $heading ) {
 /**
  * Reward toggle text
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @param string $heading Reward toggle text
  * @return string Modified reward toggle text
@@ -1240,7 +1365,7 @@ function atcf_edd_variable_pricing_toggle_text( $text ) {
 /**
  * Campaign Types
  *
- * @since AppThemer Crowdfunding 0.9
+ * @since Astoundify Crowdfunding 0.9
  */
 function atcf_campaign_types() {
 	$types = array(

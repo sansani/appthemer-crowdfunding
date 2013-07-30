@@ -7,7 +7,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: crowdfunding, donations, charity, fundraising, digital downloads, crowd funding, crowdsource 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 1.4.1
+Stable Tag: 1.5
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -61,7 +61,25 @@ Yes. However, it won't look much different than a standard EDD install. Template
 
 == Changelog ==
 
-= 1.4: July 5, 2013 =
+= 1.5: July 30, 2013 =
+
+https://github.com/Astoundify/crowdfunding/issues?milestone=11&page=1&state=closed
+
+* New: Themes can define support for tags and categories (they will not show if no support is declared).
+* New: Ability to select multiple categories.
+* New: Less strict payment processing. Allow for continuous reprocessing until all current payments are published.
+* New: Ability to filter columns of exported data.
+* New: Reinstate campaigns to allow for new funds to be pledged.
+* New: Ability to have just custom pledge amounts, and no rewards.
+* Fix: Better media permissions. Allow all users to upload, and only view their uploads.
+* Fix: Don't empty the cart to avoid the "empty cart bug", and allow for multiple pledges.
+* Tweaks: Update language files, various other fixes.
+
+= 1.4.1: July 6, 2013 =
+
+https://github.com/astoundify/crowdfunding/issues?milestone=12&page=1&state=closed
+
+* Fix: Bug with account creation / secure password error fixed.
 
 https://github.com/astoundify/crowdfunding/issues?milestone=9&page=1&state=closed
 

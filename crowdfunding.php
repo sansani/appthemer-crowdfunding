@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Crowd Funding by Astoundify
+ * Plugin Name: Crowdfunding by Astoundify
  * Plugin URI:  https://github.com/astoundify/crowdfunding/
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      Astoundify
  * Author URI:  http://astoundify.com
- * Version:     1.4.1
+ * Version:     1.5
  * Text Domain: atcf
  */
 
@@ -18,7 +18,7 @@ include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 /**
  * Main Crowd Funding Class
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  */
 final class ATCF_CrowdFunding {
 
@@ -33,19 +33,29 @@ final class ATCF_CrowdFunding {
 	 * Ensures that only one instance of Crowd Funding exists in memory at any one
 	 * time. Also prevents needing to define globals all over the place.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return The one true Crowd Funding
 	 */
 	public static function instance() {
 		if ( ! isset ( self::$instance ) ) {
-			self::$instance = new ATCF_CrowdFunding;
-			self::$instance->setup_globals();
-			self::$instance->includes();
-			self::$instance->setup_actions();
+			self::$instance = new self;
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * Start your engines.
+	 *
+	 * @since Astoundify Crowdfunding 1.5
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->setup_globals();
+		$this->includes();
+		$this->setup_actions();
 	}
 
 	/** Private Methods *******************************************************/
@@ -54,14 +64,14 @@ final class ATCF_CrowdFunding {
 	 * Set some smart defaults to class variables. Allow some of them to be
 	 * filtered to allow for early overriding.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
 	private function setup_globals() {
 		/** Versions **********************************************************/
 
-		$this->version    = '1.4.1';
+		$this->version    = '1.5';
 		$this->db_version = '1';
 
 		/** Paths *************************************************************/
@@ -88,7 +98,7 @@ final class ATCF_CrowdFunding {
 	/**
 	 * Include required files.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -119,7 +129,7 @@ final class ATCF_CrowdFunding {
 	/**
 	 * Setup the default hooks and actions
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @return void
 	 */
@@ -136,7 +146,7 @@ final class ATCF_CrowdFunding {
 	/**
 	 * Easy Digital Downloads
 	 *
-	 * @since Appthemer CrowdFunding 0.2-alpha
+	 * @since Astoundify Crowdfunding 0.2-alpha
 	 *
 	 * @return void
 	 */
@@ -154,7 +164,7 @@ final class ATCF_CrowdFunding {
 	/**
 	 * Admin notice.
 	 *
-	 * @since Appthemer CrowdFunding 0.2-alpha
+	 * @since Astoundify Crowdfunding 0.2-alpha
 	 *
 	 * @return void
 	 */
@@ -244,7 +254,7 @@ final class ATCF_CrowdFunding {
 	/**
 	 * Loads the plugin language files
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 */
 	public function load_textdomain() {
 		// Traditional WordPress plugin locale filter
@@ -269,21 +279,6 @@ final class ATCF_CrowdFunding {
 }
 
 /**
- * Does the current theme support certain functionality?
- *
- * @since AppThemer Crowdfunding 1.3
- *
- * @param string $feature The name of the feature to check.
- * @return boolean If the feature is supported or not.
- */
-function atcf_theme_supports( $feature ) {
-	$supports = get_theme_support( 'appthemer-crowdfunding' );
-	$supports = $supports[0];
-
-	return isset ( $supports[ $feature ] );
-}
-
-/**
  * The main function responsible for returning the one true Crowd Funding Instance
  * to functions everywhere.
  *
@@ -292,7 +287,7 @@ function atcf_theme_supports( $feature ) {
  *
  * Example: <?php $crowdfunding = crowdfunding(); ?>
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  *
  * @return The one true Crowd Funding Instance
  */

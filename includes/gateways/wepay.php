@@ -1,8 +1,8 @@
 <?php
 /**
- * Stripe gateway functionality.
+ * WePay gateway functionality.
  *
- * @since Astoundify Crowdfunding 1.1
+ * @since Astoundify Crowdfunding 1.3
  */
 
 // Exit if accessed directly
@@ -11,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Process preapproved payments
  *
- * @since Astoundify Crowdfunding 1.1
+ * @since Astoundify Crowdfunding 1.3
  *
  * @return void
  */
-function atcf_collect_funds_stripe( $gateway, $gateway_args, $campaign, $failed_payments ) {
-	global $failed_payments;
+function atcf_collect_funds_wepay( $gateway, $gateway_args, $campaign, $errors ) {
+	global $edd_wepay, $failed_payments;
 
 	if ( ! isset ( $gateway_args[ 'payments' ] ) )
 		return;
 
 	foreach ( $gateway_args[ 'payments' ] as $payment ) {
-		$charge = edds_charge_preapproved( $payment );
+		$charge = $edd_wepay->charge_preapproved( $payment );
 
 		if ( ! $charge )
 			$failed_payments[ $gateway ][ 'payments'][] = $payment;
@@ -32,4 +32,4 @@ function atcf_collect_funds_stripe( $gateway, $gateway_args, $campaign, $failed_
 
 	return $failed_payments;
 }
-add_action( 'atcf_collect_funds_stripe', 'atcf_collect_funds_stripe', 10, 4 );
+add_action( 'atcf_collect_funds_wepay', 'atcf_collect_funds_wepay', 10, 4 );

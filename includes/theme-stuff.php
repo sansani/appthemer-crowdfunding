@@ -4,21 +4,36 @@
  *
  * Some stuff themes can use, and theme compatability. 
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  */
+
+/**
+ * Does the current theme support certain functionality?
+ *
+ * @since Astoundify Crowdfunding 1.3
+ *
+ * @param string $feature The name of the feature to check.
+ * @return boolean If the feature is supported or not.
+ */
+function atcf_theme_supports( $feature ) {
+	$supports = get_theme_support( 'appthemer-crowdfunding' );
+	$supports = $supports[0];
+
+	return isset ( $supports[ $feature ] );
+}
 
 /**
  * Extend WP_Query with some predefined defaults to query
  * only campaign items.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  */
 class ATCF_Campaign_Query extends WP_Query {
 	/**
 	 * Extend WP_Query with some predefined defaults to query
 	 * only campaign items.
 	 *
-	 * @since Appthemer CrowdFunding 0.1-alpha
+	 * @since Astoundify Crowdfunding 0.1-alpha
 	 *
 	 * @param array $args
 	 * @return void
@@ -41,7 +56,7 @@ class ATCF_Campaign_Query extends WP_Query {
  * Themes can hook into `atcf_campaign_contribute_options` to output
  * their own prices, if they choose to implement a custom solution.
  *
- * @since Appthemer CrowdFunding 0.1-alpha
+ * @since Astoundify Crowdfunding 0.1-alpha
  */
 function atcf_purchase_variable_pricing( $download_id ) {
 	$variable_pricing = edd_has_variable_prices( $download_id );
@@ -62,7 +77,7 @@ function atcf_purchase_variable_pricing( $download_id ) {
 /**
  * Always show prices in increasing order.
  *
- * @since Appthemer CrowdFunding 0.5.1
+ * @since Astoundify Crowdfunding 0.5.1
  *
  * @see atcf_purchase_variable_pricing
  * @return array
@@ -74,7 +89,7 @@ function atcf_sort_variable_prices( $a, $b ) {
 /**
  * Remove output of variable pricing, and add our own system.
  *
- * @since Appthemer CrowdFunding 0.3-alpha
+ * @since Astoundify Crowdfunding 0.3-alpha
  *
  * @return void
  */
@@ -87,7 +102,7 @@ function atcf_theme_variable_pricing() {
  * Check for theme support, and remove variable pricing display,
  * as we can assume the theme has implemented it somehow else.
  *
- * @since Appthemer CrowdFunding 0.3-alpha
+ * @since Astoundify Crowdfunding 0.3-alpha
  *
  * @return void
  */
@@ -102,7 +117,7 @@ add_action( 'after_setup_theme', 'atcf_theme_custom_variable_pricing', 100 );
 /**
  * When a campaign is over, show a message.
  *
- * @since AppThemer Crowdfunding 1.3
+ * @since Astoundify Crowdfunding 1.3
  *
  * @return void
  */
