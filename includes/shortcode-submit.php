@@ -45,13 +45,6 @@ function atcf_shortcode_submit( $atts ) {
 		
 		$campaign = atcf_get_campaign( $post );
 	}
-
-	wp_enqueue_script( 'jquery-validation', EDD_PLUGIN_URL . 'assets/js/jquery.validate.min.js');
-	wp_enqueue_script( 'atcf-scripts', $crowdfunding->plugin_url . '/assets/js/crowdfunding.js', array( 'jquery', 'jquery-validation' ) );
-
-	wp_localize_script( 'atcf-scripts', 'CrowdFundingL10n', array(
-		'oneReward' => __( 'At least one reward is required.', 'atcf' )
-	) );
 ?>
 	<?php do_action( 'atcf_shortcode_submit_before', $atts, $campaign ); ?>
 	<form action="" method="post" class="atcf-submit-campaign" enctype="multipart/form-data">
@@ -141,9 +134,6 @@ add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_goal', 
 function atcf_shortcode_submit_field_length( $atts, $campaign ) {
 	global $edd_options;
 
-	if ( $atts[ 'editing' ] )
-		return;
-
 	$min = isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14;
 	$max = isset ( $edd_options[ 'atcf_campaign_length_max' ] ) ? $edd_options[ 'atcf_campaign_length_max' ] : 48;
 
@@ -151,16 +141,20 @@ function atcf_shortcode_submit_field_length( $atts, $campaign ) {
 
 	$length = $atts[ 'previewing' ] ? $campaign->days_remaining() : $length;
 ?>
-	<p class="atcf-submit-campaign-length">
-		<label for="length">
-			<?php _e( 'Length (Days)', 'atcf' ); ?>
+	<?php if ( $atts[ 'editing' ] ) : ?>
+		<input type="hidden" name="length" id="length" value="<?php echo esc_attr( $length ); ?>">
+	<?php else : ?>
+		<p class="atcf-submit-campaign-length">
+			<label for="length">
+				<?php _e( 'Length (Days)', 'atcf' ); ?>
 
-			<?php if ( ! atcf_has_preapproval_gateway() ) : ?>
-				<a href="#" class="atcf-toggle-neverending"><?php _e( 'No End Date', 'atcf' ); ?></a>
-			<?php endif; ?>
-		</label>
-		<input type="number" min="<?php echo esc_attr( $min ); ?>" max="<?php echo esc_attr( $max ); ?>" step="1" name="length" id="length" value="<?php echo esc_attr( $length ); ?>">
-	</p>
+				<?php if ( ! atcf_has_preapproval_gateway() ) : ?>
+					<a href="#" class="atcf-toggle-neverending"><?php _e( 'No End Date', 'atcf' ); ?></a>
+				<?php endif; ?>
+			</label>
+			<input type="number" min="<?php echo esc_attr( $min ); ?>" max="<?php echo esc_attr( $max ); ?>" step="1" name="length" id="length" value="<?php echo esc_attr( $length ); ?>">
+		</p>
+	<?php endif; ?>
 <?php
 }
 add_action( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_length', 30, 2 );
@@ -223,7 +217,8 @@ function atcf_shortcode_submit_field_category( $atts, $campaign ) {
 		<ul class="atcf-multi-select">			
 		<?php 
 			wp_terms_checklist( isset ( $campaign->ID ) ? $campaign->ID : 0, array( 
-				'taxonomy'   => 'download_category'
+				'taxonomy'   => 'download_category',
+				'walker'     => new ATCF_Walker_Terms_Checklist
 			) );
 		?>
 	</ul>
@@ -253,7 +248,8 @@ function atcf_shortcode_submit_field_tags( $atts, $campaign ) {
 		<ul class="atcf-multi-select">		
 		<?php 
 			wp_terms_checklist( isset ( $campaign->ID ) ? $campaign->ID : 0, array(
-				'taxonomy' => 'download_tag'
+				'taxonomy' => 'download_tag',
+				'walker'   => new ATCF_Walker_Terms_Checklist
 			) );
 		?>
 		</ul>
@@ -354,7 +350,7 @@ function atcf_shortcode_submit_field_images( $atts, $campaign ) {
 		return;
 ?>
 	<p class="atcf-submit-campaign-images">
-		<label for="excerpt"><?php _e( 'Featured Image', 'atcf' ); ?></label>
+		<label for="image"><?php _e( 'Featured Image', 'atcf' ); ?></label>
 		<input type="file" name="image" id="image" />
 
 		<?php if ( $atts[ 'editing' ] || $atts[ 'previewing' ] ) : ?>
@@ -746,9 +742,10 @@ function atcf_shortcode_submit_process() {
 	if ( $c_email )
 		update_post_meta( $campaign, 'campaign_contact_email', sanitize_text_field( $c_email ) );
 	
-	if ( $end_date )
+	if ( $end_date ) {
 		update_post_meta( $campaign, 'campaign_end_date', sanitize_text_field( $end_date ) );
-	else
+		update_post_meta( $campaign, 'campaign_length', $length );
+	} else
 		update_post_meta( $campaign, 'campaign_endless', 1 );
 	
 	if ( $location )
@@ -858,3 +855,44 @@ function atcf_shortcode_submit_redirect() {
 	}
 }
 add_action( 'template_redirect', 'atcf_shortcode_submit_redirect', 1 );
+
+/**
+ * Walker to output an unordered list of category checkbox <input> elements.
+ *
+ * @see Walker
+ * @see wp_category_checklist()
+ * @see wp_terms_checklist()
+ * @since 2.5.1
+ */
+class ATCF_Walker_Terms_Checklist extends Walker {
+	var $tree_type = 'category';
+	var $db_fields = array ('parent' => 'parent', 'id' => 'term_id'); //TODO: decouple this
+
+	function start_lvl( &$output, $depth = 0, $args = array() ) {
+		$indent = str_repeat("\t", $depth);
+		$output .= "$indent<ul class='children'>\n";
+	}
+
+	function end_lvl( &$output, $depth = 0, $args = array() ) {
+		$indent = str_repeat("\t", $depth);
+		$output .= "$indent</ul>\n";
+	}
+
+	function start_el( &$output, $category, $depth = 0, $args = array(), $current_object_id = 0 ) {
+		extract($args);
+		if ( empty($taxonomy) )
+			$taxonomy = 'category';
+
+		if ( $taxonomy == 'category' )
+			$name = 'post_category';
+		else
+			$name = 'tax_input['.$taxonomy.']';
+
+		$class = in_array( $category->term_id, $popular_cats ) ? ' class="popular-category"' : '';
+		$output .= "\n<li id='{$taxonomy}-{$category->term_id}'$class>" . '<label class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="'.$name.'[]" id="in-'.$taxonomy.'-' . $category->term_id . '"' . checked( in_array( $category->term_id, $selected_cats ), true, false ) . ' /> ' . esc_html( apply_filters('the_category', $category->name )) . '</label>';
+	}
+
+	function end_el( &$output, $category, $depth = 0, $args = array() ) {
+		$output .= "</li>\n";
+	}
+}

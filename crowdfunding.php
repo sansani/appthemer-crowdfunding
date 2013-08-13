@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      Astoundify
  * Author URI:  http://astoundify.com
- * Version:     1.5
+ * Version:     1.6
  * Text Domain: atcf
  */
 
@@ -71,7 +71,7 @@ final class ATCF_CrowdFunding {
 	private function setup_globals() {
 		/** Versions **********************************************************/
 
-		$this->version    = '1.5';
+		$this->version    = '1.6';
 		$this->db_version = '1';
 
 		/** Paths *************************************************************/
@@ -103,14 +103,16 @@ final class ATCF_CrowdFunding {
 	 * @return void
 	 */
 	private function includes() {
+		require( $this->includes_dir . 'class-install.php' );
+		require( $this->includes_dir . 'class-campaigns.php' );
+		require( $this->includes_dir . 'class-campaign.php' );
+		require( $this->includes_dir . 'class-roles.php' );
 		require( $this->includes_dir . 'settings.php' );
-		require( $this->includes_dir . 'campaign.php' );
 		require( $this->includes_dir . 'gateways.php' );
 		require( $this->includes_dir . 'theme-stuff.php' );
 		require( $this->includes_dir . 'shipping.php' );
 		require( $this->includes_dir . 'logs.php' );
 		require( $this->includes_dir . 'export.php' );
-		require( $this->includes_dir . 'roles.php' );
 		require( $this->includes_dir . 'permalinks.php' );
 		require( $this->includes_dir . 'checkout.php' );
 		require( $this->includes_dir . 'shortcode-submit.php' );
@@ -135,11 +137,14 @@ final class ATCF_CrowdFunding {
 	 */
 	private function setup_actions() {
 		add_action( 'init', array( $this, 'is_edd_activated' ), 1 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'frontend_scripts' ) );
 		add_filter( 'template_include', array( $this, 'template_loader' ) );
-		
-		do_action( 'atcf_setup_actions' );
 
 		$this->load_textdomain();
+
+		register_activation_hook( $this->file, array( 'ATCF_Install', 'init' ), 10 );
+
+		do_action( 'atcf_setup_actions' );
 	}
 
 	
@@ -154,9 +159,21 @@ final class ATCF_CrowdFunding {
 		if ( ! class_exists( 'Easy_Digital_Downloads' ) ) {
 			if ( is_plugin_active( $this->basename ) ) {
 				deactivate_plugins( $this->basename );
-				unset ($_GET[ 'activate' ] ); // Ghetto
+				unset( $_GET[ 'activate' ] ); // Ghetto
 
 				add_action( 'admin_notices', array( $this, 'edd_notice' ) );
+			}
+		}
+
+		/** Will remove after a few versions */
+		$theme = wp_get_theme();
+
+		if ( 'fundify' == $theme->Template && version_compare( $theme->Version, '1.5', '<' ) ) {
+			if ( is_plugin_active( $this->basename ) ) {
+				deactivate_plugins( $this->basename );
+				unset( $_GET[ 'activate' ] ); // Ghetto
+
+				add_action( 'admin_notices', array( $this, 'theme_notice' ) );
 			}
 		}
 	}
@@ -175,6 +192,21 @@ final class ATCF_CrowdFunding {
 						__( '<strong>Notice:</strong> Crowdfunding by Astoundify requires <a href="%s">Easy Digital Downloads</a> in order to function properly.', 'atcf' ), 
 						wp_nonce_url( network_admin_url( 'update.php?action=install-plugin&plugin=easy-digital-downloads' ), 'install-plugin_easy-digital-downloads' )
 				); ?></p>
+		</div>
+<?php
+	}
+
+	/**
+	 * Theme notice.
+	 *
+	 * @since Astoundify Crowdfunding 1.6
+	 *
+	 * @return void
+	 */
+	function theme_notice() {
+?>
+		<div class="updated">
+			<p><?php _e( '<strong>Notice:</strong> Please update your copy of Fundify before updating Crowdfunding by Astoundify', 'atcf' ); ?></p>
 		</div>
 <?php
 	}
@@ -249,6 +281,56 @@ final class ATCF_CrowdFunding {
 		}
 
 		return $template;
+	}
+
+	public function frontend_scripts() {
+		global $edd_options;
+
+		$is_submission = is_page( $edd_options[ 'submit_page' ] ) || did_action( 'atcf_found_edit' );
+		$is_campaign   = is_singular( 'download' ) || did_action( 'atcf_found_single' ) || apply_filters( 'atcf_is_campaign_page', false );
+
+		if ( ! ( $is_submission || $is_campaign ) )
+			return;
+
+		if ( $is_submission ) {
+			wp_enqueue_script( 'jquery-validation', EDD_PLUGIN_URL . 'assets/js/jquery.validate.min.js', array( 'jquery' ) );
+		}
+
+		if ( $is_campaign ) {
+			wp_enqueue_script( 'formatCurrency', $this->plugin_url . 'assets/js/jquery.formatCurrency-1.4.0.pack.js', array( 'jquery' ), '1.4.1', true );
+		}
+
+		wp_enqueue_script( 'atcf-scripts', $this->plugin_url . 'assets/js/crowdfunding.js', array( 'jquery' ) );
+
+		$settings = array(
+			'pages' => array(
+				'is_submission' => $is_submission,
+				'is_campaign'   => $is_campaign
+			)
+		);
+
+		if ( $is_submission ) {
+			$settings[ 'submit' ] = array(
+				array(
+					'i18n' => array(
+						'oneReward' => __( 'At least one reward is required.', 'atcf' )
+					)
+				)
+			);
+		}
+
+		if ( $is_campaign ) {
+			$settings[ 'campaign' ] = array(
+				'i18n'     => array(),
+				'currency' => array(
+					'thousands' => $edd_options[ 'thousands_separator' ],
+					'decimal'   => $edd_options[ 'decimal_separator' ],
+					'symbol'    => edd_currency_filter( '' )
+				)
+			);
+		}
+
+		wp_localize_script( 'atcf-scripts', 'atcfSettings', $settings );
 	}
 
 	/**
