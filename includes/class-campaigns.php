@@ -491,6 +491,10 @@ function atcf_campaign_save_end_date( $new ) {
 
 	$end_date = get_gmt_from_date( $end_date );
 
+	if ( mysql2date( 'G', $end_date ) > current_time( 'timestamp' ) ) {
+		delete_post_meta( $post->ID, '_campaign_expired' );
+	}
+
 	return $end_date;
 }
 
@@ -868,18 +872,18 @@ add_filter( 'edd_metabox_save_campaign_updates', 'atcf_sanitize_campaign_updates
  */
 function atcf_save_variable_prices_norewards( $prices ) {
 	$norewards = isset ( $_POST[ 'campaign_norewards' ] ) ? true : false;
-	
+
 	if ( ! $norewards )
 		return $prices;
 
-	if ( 1 == count( $prices ) && $norewards )
+	if ( $prices[0][ 'name' ] != '' )
 		return $prices;
 
 	$prices = array();
 
 	$prices[0] = array(
 		'name'   => apply_filters( 'atcf_default_no_rewards_name', __( 'Donation', 'atcf' ) ),
-		'amount' => 0,
+		'amount' => apply_filters( 'atcf_default_no_rewards_price', 0 ),
 		'limit'  => null,
 		'bought' => 0
 	);
@@ -937,6 +941,8 @@ function atcf_check_for_completed_campaigns() {
 			update_post_meta( $campaign->ID, '_campaign_expired', current_time( 'mysql' ) );
 
 			do_action( 'atcf_campaign_expired', $campaign );
+		} else if ( $now < $expiration_date && get_post_meta( $campaign->ID, '_campaign_expired', true ) ) {
+			delete_post_meta( $campaign->ID, '_campaign_expired' );
 		}
 	}
 }

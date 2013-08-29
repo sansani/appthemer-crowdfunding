@@ -7,7 +7,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: crowdfunding, donations, charity, fundraising, digital downloads, crowd funding, crowdsource 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 1.6.1
+Stable Tag: 1.7
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -60,6 +60,21 @@ Developers can contribute to the source code of the project on [GitHub](https://
 Yes. However, it won't look much different than a standard EDD install. Templates must be modified/created to output relevant crowdfunding information (display amount funded, etc).
 
 == Changelog ==
+
+= 1.7: August 27, 2013 =
+
+https://github.com/Astoundify/crowdfunding/issues?milestone=16&page=1&state=closed
+
+* New: Major: Submission process completely rewritten. Now much easier to include extra fields, rearrange fields, etc.
+* Tweaks: Update language files, various other fixes.
+
+= 1.6.2: August 15, 2013 =
+
+* New: Filter added to set minimum amount on donations.
+* New: If donations only, have input blank by default.
+* Fix: Make sure formatCurrency script is always loaded when needed.
+* Fix: Make sure a default donation reward is added automatically in the backend.
+* Fix: If a campaign expires, then the date is set to the future, remove expired flag.
 
 = 1.6.1: August 14, 2013 =
 

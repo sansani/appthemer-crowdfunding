@@ -32,6 +32,7 @@ function atcf_settings_general_pages( $settings ) {
 
 	$keys[] = 'faq_page';
 	$keys[] = 'submit_page';
+	$keys[] = 'submit_success_page';
 	$keys[] = 'profile_page';
 	$keys[] = 'login_page';
 	$keys[] = 'register_page';
@@ -48,6 +49,14 @@ function atcf_settings_general_pages( $settings ) {
 		'id'      => 'submit_page',
 		'name'    => __( 'Submit Page', 'atcf' ),
 		'desc'    => __( 'The page that contains the <code>[appthemer_crowdfunding_submit]</code> shortcode.', 'atcf' ),
+		'type'    => 'select',
+		'options' => $pages_options
+	);
+
+	$vals[] =  array(
+		'id'      => 'submit_success_page',
+		'name'    => __( 'Submit Success Page', 'atcf' ),
+		'desc'    => __( 'The page that users are redirected to after a success campaign subimssion.', 'atcf' ),
 		'type'    => 'select',
 		'options' => $pages_options
 	);
@@ -98,8 +107,8 @@ function atcf_settings_general( $settings ) {
 
 	$settings[ 'atcf_settings_custom_pledge' ] = array(
 		'id'      => 'atcf_settings_custom_pledge',
-		'name'    => __( 'Custom Pledging', 'fundify' ),
-		'desc'    => __( 'Allow arbitrary amounts to be pledged.', 'fundify' ),
+		'name'    => __( 'Custom Pledging', 'atcf' ),
+		'desc'    => __( 'Allow arbitrary amounts to be pledged.', 'atcf' ),
 		'type'    => 'checkbox',
 		'std'     => 1
 	);
