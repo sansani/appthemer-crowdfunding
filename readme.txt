@@ -30,7 +30,7 @@ Features of the plugin include:
 * Crowd fund anything you want!
 * Frontend form submission to easily collect campaign information.
 * Compatible with WePay, Stripe & PayPal Adaptive Payments API for pre-approved purchases. When a person commits to funding your project they are only charged if your campaign reaches its pre-defined goal.
-* Compatible with all standard payment gateways that Easy Digital Downloads supports, i.e WePay, Stripe, PayPal Pro/Express.
+* Compatible with all standard payment gateways that Easy Digital Downloads supports, i.e PayPal Pro/Express, 2Checkout, Authorize.net, WePay, Stripe.
 * Works both as a donation plugin and a Crowdfunding plugin.
 * Easy to theme and integrate into your own site which uses Easy Digital Downloads.
 
