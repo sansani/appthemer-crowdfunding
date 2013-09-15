@@ -66,6 +66,9 @@ class ATCF_Campaign {
 	public function goal( $formatted = true ) {
 		$goal = $this->__get( 'campaign_goal' );
 
+		if ( ! $goal )
+			return 0;
+
 		if ( $formatted )
 			return edd_currency_filter( edd_format_amount( $goal ) );
 
@@ -129,7 +132,7 @@ class ATCF_Campaign {
 	 * @return sting Campaign End Date
 	 */
 	public function end_date() {
-		return mysql2date( 'Y-m-d h:i:s', $this->__get( 'campaign_end_date' ), false );
+		return $this->__get( 'campaign_end_date' );
 	}
 
 	/**
@@ -177,7 +180,7 @@ class ATCF_Campaign {
 	}
 
 	/**
-	 * Campaign Backers
+	 * Campaign Backers Logs
 	 *
 	 * Use EDD logs to get all sales. This includes both preapproved
 	 * payments (if they have Plugin installed) or standard payments.
@@ -186,7 +189,7 @@ class ATCF_Campaign {
 	 *
 	 * @return sting Campaign Backers
 	 */
-	public function backers() {
+	public function backers( $unique = false ) {
 		global $edd_logs;
 
 		$backers = $edd_logs->get_connected_logs( array(
@@ -199,7 +202,37 @@ class ATCF_Campaign {
 		if ( ! $backers )
 			return array();
 
+		if ( $unique )
+			return $this->unique_backers();
+
 		return $backers;
+	}
+
+	/**
+	 * Unique Campaign Backers
+	 *
+	 * A log is made for each download item, so if someone purchases the same thing 4 times
+	 * at once, 4 logs are created. Sort those out, and only return unique logs.
+	 *
+	 * @since Astoundify Crowdfunding 1.7.2
+	 *
+	 * @return sting Campaign Backers
+	 */
+	public function unique_backers() {
+		$backers  = $this->backers();
+		$_backers = array();
+
+		foreach ( $backers as $backer ) {
+			$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
+
+			if ( in_array( $payment_id, $_backers ) )
+				continue;
+			else {
+				$_backers[] = $payment_id;
+			}
+		}
+
+		return $_backers;
 	}
 
 	/**
@@ -210,63 +243,39 @@ class ATCF_Campaign {
 	 * @return int Campaign Backers Count
 	 */
 	public function backers_count() {
-		$prices  = edd_get_variable_prices( $this->ID );
-		$total   = 0;
-
-		if ( empty( $prices ) )
-			return 0;
-
-		foreach ( $prices as $price ) {
-			$total = $total + ( isset ( $price[ 'bought' ] ) ? $price[ 'bought' ] : 0 );
-		}
-		
-		return absint( $total );
+		return absint( count( $this->unique_backers() ) );
 	}
 
 	/**
-	 * Campaign Backers Per Price
+	 * Campaign Time Remaining
 	 *
-	 * Get all of the backers, then figure out what they purchased. Increment
-	 * a counter for each price point, so they can be displayed elsewhere. 
-	 * Not 100% because keys can change in EDD, but it's the best way I think.
+	 * @since Astoundify Crowdfunding 1.7
 	 *
-	 * @since Astoundify Crowdfunding 0.1-alpha
-	 *
-	 * @return array $totals The number of backers for each price point
+	 * @param string The format to output
+	 * @return int The remaining time in the specified format.
 	 */
-	public function backers_per_price() {
-		$backers = $this->backers();
-		$prices  = edd_get_variable_prices( $this->ID );
-		$totals  = array();
+	public function time_remaining( $format ) {
+		$now     = current_time( 'timestamp' );
+		$expires = strtotime( $this->end_date(), $now );
 
-		if ( ! is_array( $backers ) )
-			$backers = array();
+		if ( $now > $expires )
+			return 0;
 
-		foreach ( $prices as $price ) {
-			$totals[$price[ 'amount' ]] = 0;
+		$diff = $expires - $now;
+
+		switch ( $format ) {
+			case 'days' :
+				$off = $diff / 86400;
+			break;
+
+			case 'hours' :
+				$off = $diff / ( 60 * 60 );
+			break;
 		}
 
-		foreach ( $backers as $log ) {
-			$payment_id = get_post_meta( $log->ID, '_edd_log_payment_id', true );
+		$remaining = floor( $off );
 
-			$payment    = get_post( $payment_id );
-			
-			if ( empty( $payment ) )
-				continue;
-
-			$cart_items = edd_get_payment_meta_cart_details( $payment_id );
-			
-			foreach ( $cart_items as $item ) {
-				if ( isset ( $item[ 'item_number' ][ 'options' ][ 'atcf_extra_price' ] ) ) {
-					$price_id = $item[ 'price' ] - $item[ 'item_number' ][ 'options' ][ 'atcf_extra_price' ];
-				} else
-					$price_id = $item[ 'price' ];
-
-				$totals[$price_id] = isset ( $totals[$price_id] ) ? $totals[$price_id] + 1 : 1;
-			}
-		}
-
-		return $totals;
+		return apply_filters( 'atcf_campaign_time_remainig', $remaining, $this );
 	}
 
 	/**
@@ -279,20 +288,9 @@ class ATCF_Campaign {
 	 * @return int The number of days remaining
 	 */
 	public function days_remaining() {
-		$expires = strtotime( $this->end_date() );
-		$now     = current_time( 'timestamp' );
+		_deprecated_function( __FUNCTION__, '1.7.2', 'time_remaining()' );
 
-		if ( $now > $expires )
-			return 0;
-
-		$diff = $expires - $now;
-
-		if ( $diff < 0 )
-			return 0;
-
-		$days = $diff / 86400;
-
-		return ceil( $days );
+		return $this->time_remaining( 'days' );
 	}
 
 	/**
@@ -305,20 +303,9 @@ class ATCF_Campaign {
 	 * @return int The hours remaining
 	 */
 	public function hours_remaining() {
-		$expires = strtotime( $this->end_date() );
-		$now     = current_time( 'timestamp' );
+		_deprecated_function( __FUNCTION__, '1.7.2', 'time_remaining()' );
 
-		if ( $now > $expires )
-			return 0;
-
-		$diff = $expires - $now;
-
-		if ( $diff < 0 )
-			return 0;
-
-		$days = $diff / ( 60 * 60 );
-
-		return floor( $days );
+		return $this->time_remaining( 'hours' );
 	}
 
 	/**
@@ -358,18 +345,28 @@ class ATCF_Campaign {
 	public function current_amount( $formatted = true ) {
 		$total   = 0;
 		$backers = $this->backers();
+		$logged  = array();
 
 		if ( 0 == $backers )
 			return $formatted ? edd_currency_filter( edd_format_amount( 0 ) ) : 0;
 
+		$status = atcf_has_preapproval_gateway() ? 'preapproved' : 'publish';
+
 		foreach ( $backers as $backer ) {
 			$payment_id = get_post_meta( $backer->ID, '_edd_log_payment_id', true );
-			$payment    = get_post( $payment_id );
-			
-			if ( empty( $payment ) )
-				continue;
 
-			$total      = $total + edd_get_payment_amount( $payment_id );
+			if ( in_array( $payment_id, $logged ) )
+				continue;
+			else {
+				$logged[$payment_id] = $payment_id;
+
+				$payment = get_post( $payment_id );
+				
+				if ( empty( $payment ) )
+					continue;
+
+				$total = $total + edd_get_payment_amount( $payment_id );
+			}
 		}
 		
 		if ( $formatted )

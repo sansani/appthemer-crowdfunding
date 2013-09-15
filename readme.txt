@@ -7,7 +7,7 @@ Contributors: SpencerFinnell, adampickering
 Tags: crowdfunding, donations, charity, fundraising, digital downloads, crowd funding, crowdsource 
 Requires at least: 3.5
 Tested up to: 3.5
-Stable Tag: 1.7
+Stable Tag: 1.7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -30,7 +30,7 @@ Features of the plugin include:
 * Crowd fund anything you want!
 * Frontend form submission to easily collect campaign information.
 * Compatible with WePay, Stripe & PayPal Adaptive Payments API for pre-approved purchases. When a person commits to funding your project they are only charged if your campaign reaches its pre-defined goal.
-* Compatible with all standard payment gateways that Easy Digital Downloads supports, i.e PayPal Pro/Express, 2Checkout, Authorize.net, WePay, Stripe.
+* Compatible with all standard payment gateways that Easy Digital Downloads supports, i.e WePay, Stripe, PayPal Pro/Express.
 * Works both as a donation plugin and a Crowdfunding plugin.
 * Easy to theme and integrate into your own site which uses Easy Digital Downloads.
 
@@ -60,6 +60,29 @@ Developers can contribute to the source code of the project on [GitHub](https://
 Yes. However, it won't look much different than a standard EDD install. Templates must be modified/created to output relevant crowdfunding information (display amount funded, etc).
 
 == Changelog ==
+
+= 1.7.2: September 12, 2013 =
+
+https://github.com/Astoundify/crowdfunding/issues?milestone=17&page=1&state=closed
+
+* Fix: Better payment tracking when pledging multiple times, deleting, etc.
+* Fix: More consistent dates when editing/submitting/updating.
+* Fix: Don't 404 when only the name is filled out when submitting a campaign.
+* Fix: Go back to clearing the cart when viewing a new pledge.
+* Fix: Make sure all data is exported via CSV.
+* Fix: Always make sure the goal is an integer to avoid errors.
+* Fix: When there are more than 11 pledge levels, make sure they can properly be selected.
+* Fix: Add the Terms of Service back to the submission process.
+* Tweaks: Various improvements and language updates.
+
+= 1.7.1: September 1, 2013 =
+
+* Fix: Make sure translations are properly loaded.
+* Fix: Make sure the goal on frontend and backend is always numeric when saved/output.
+* Fix: Don't show blank contributions on the profile page.
+* Fix: Proper default length when creating a campaign on the frontend.
+* Fix: Valid markup for multicheck items. Props @Studio164a.
+* Tweaks: Remove upgrade warning/blocker when activating/upgrading.
 
 = 1.7: August 27, 2013 =
 

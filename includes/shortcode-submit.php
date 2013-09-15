@@ -138,6 +138,9 @@ class ATCF_Submit_Campaign {
 	public function register_fields() {
 		global $edd_options;
 
+		$min = isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14;
+		$max = isset ( $edd_options[ 'atcf_campaign_length_max' ] ) ? $edd_options[ 'atcf_campaign_length_max' ] : 48;
+
 		$fields = array(
 			'campaign_heading' => array(
 				'label'       => __( 'Campaign Information', 'atcf' ),
@@ -166,12 +169,12 @@ class ATCF_Submit_Campaign {
 			),
 			'length' => array(
 				'label'       => __( 'Length', 'atcf' ),
-				'default'     => 57,
+				'default'     => ( $min + $max ) / 2,
 				'type'        => 'number',
 				'editable'    => false,
 				'placeholder' => null,
-				'min'         => isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14,
-				'max'         => isset ( $edd_options[ 'atcf_campaign_length_max' ] ) ? $edd_options[ 'atcf_campaign_length_max' ] : 48,
+				'min'         => $min,
+				'max'         => $max,
 				'step'        => 1,
 				'priority'    => 8
 			),
@@ -289,7 +292,7 @@ class ATCF_Submit_Campaign {
 				'required'    => true,
 				'priority'    => 36
 			),
-			'author' => array(
+			'organization' => array(
 				'label'       => __( 'Name/Organization', 'atcf' ),
 				'default'     => null,
 				'type'        => 'text',
@@ -396,7 +399,7 @@ class ATCF_Submit_Campaign {
 			break;
 			
 			default :
-				$data = apply_filters( 'atcf_shortcode_submit_saved_data_' . $key, '', $key, $campaign );
+				$data = apply_filters( 'atcf_shortcode_submit_saved_data_' . $key, null, $key, $campaign );
 			break;
 		}
 
@@ -462,10 +465,7 @@ class ATCF_Submit_Campaign {
 	public function save_length( $key, $field, $campaign, $fields ) {
 		global $edd_options;
 
-		if ( ! isset ( $_POST[ $key ] ) )
-			return;
-
-		if ( $field[ 'value' ] ) {
+		if ( '' != $field[ 'value' ] ) {
 			$length = absint( $field[ 'value' ] );
 
 			$min = isset ( $edd_options[ 'atcf_campaign_length_min' ] ) ? $edd_options[ 'atcf_campaign_length_min' ] : 14;
@@ -476,8 +476,8 @@ class ATCF_Submit_Campaign {
 			else if ( $length > $max )
 				$length = $max;
 
-			$end_date = strtotime( sprintf( '+%d day', $length ) );
-			$end_date = get_gmt_from_date( date( 'Y-m-d H:i:s', $end_date ) );
+			$end_date = strtotime( sprintf( '+%d day', $length ), current_time( 'timestamp' ) );
+			$end_date = date( 'Y-m-d H:i:s', $end_date );
 		} else {
 			$end_date = null;
 		}
@@ -485,8 +485,9 @@ class ATCF_Submit_Campaign {
 		if ( $end_date ) {
 			update_post_meta( $campaign, 'campaign_end_date', sanitize_text_field( $end_date ) );
 			update_post_meta( $campaign, 'campaign_length', $field[ 'value' ] );
-		} else
+		} else {
 			update_post_meta( $campaign, 'campaign_endless', 1 );
+		}
 	}
 
 	/**
@@ -611,6 +612,21 @@ class ATCF_Submit_Campaign {
 	}
 
 	/**
+	 * Save Name
+	 *
+	 * @since Astoundify Crowdfunding 1.7
+	 *
+	 * @param $key The key of the current field.
+	 * @param $field The array of field arguments.
+	 * @param $atts The shortcoe attribtues.
+	 * @param $campaign The current campaign (if editing/previewing).
+	 * @return void
+	 */
+	public function save_organization( $key, $field, $campaign, $fields ) {
+		update_post_meta( $campaign, 'campaign_author', sanitize_text_field( $field[ 'value' ] ) );
+	}
+
+	/**
 	 * Save a generic field.
 	 *
 	 * @since Astoundify Crowdfunding 1.7
@@ -625,7 +641,10 @@ class ATCF_Submit_Campaign {
 		if ( isset ( $_POST[ $key ] ) && '' == $_POST[ $key ] )
 			return;
 
-		update_post_meta( $campaign, 'campaign_' . $key, sanitize_text_field( $field[ 'value' ] ) );
+		do_action( 'atcf_shortcode_submit_save_field_' . $key, $key, $field, $campaign, $fields );
+
+		if ( ! did_action( 'atcf_shortcode_submit_save_field_' . $key ) )
+			update_post_meta( $campaign, 'campaign_' . $key, sanitize_text_field( $field[ 'value' ] ) );
 	}
 }
 
@@ -652,7 +671,7 @@ function atcf_shortcode_submit( $atts ) {
 	ob_start();
 
 	/** Allow things to change the content of the shortcode. */
-	if ( apply_filters( 'atcf_shortcode_submit_hide', false ) ) {
+	if ( apply_filters( 'atcf_shortcode_submit_hide', false, $atts ) ) {
 		do_action( 'atcf_shortcode_submit_hidden', $atts );
 
 		$form = ob_get_clean();
@@ -683,7 +702,9 @@ function atcf_shortcode_submit( $atts ) {
 				$field = apply_filters( 'atcf_shortcode_submit_field', $key, $field, $atts, $campaign );
 				$field = apply_filters( 'atcf_shortcode_submit_field_before_render_' . $key, $field );
 
+				do_action( 'atcf_shortcode_submit_field_before_' . $key, $key, $field, $atts, $campaign );
 				do_action( 'atcf_shortcode_submit_field_' . $field[ 'type' ], $key, $field, $atts, $campaign );
+				do_action( 'atcf_shortcode_submit_field_after_' . $key, $key, $field, $atts, $campaign );
 			endforeach;
 		?>
 
@@ -742,6 +763,39 @@ function atcf_shortcode_submit_field_tos( $fields ) {
 	return $fields;
 }
 add_filter( 'atcf_shortcode_submit_fields', 'atcf_shortcode_submit_field_tos' );
+
+function atcf_shortcode_submit_field_before_tos( $key, $field, $atts, $campaign ) {
+	global $edd_options;
+?>
+	<div class="atcf-edd-terms-wrap">
+		<div id="edd_terms" style="display:none;">
+			<?php
+				do_action( 'edd_before_terms' );
+				echo wpautop( $edd_options['agree_text'] );
+				do_action( 'edd_after_terms' );
+			?>
+		</div>
+		<div id="edd_show_terms">
+			<a href="#" class="edd_terms_links"><?php _e( 'Show Terms', 'edd' ); ?></a>
+			<a href="#" class="edd_terms_links" style="display:none;"><?php _e( 'Hide Terms', 'edd' ); ?></a>
+		</div>
+<?php
+	edd_agree_to_terms_js();
+}
+add_action( 'atcf_shortcode_submit_field_before_tos', 'atcf_shortcode_submit_field_before_tos', 10, 4 );
+
+function atcf_shortcode_submit_field_after_tos( $key, $field, $atts, $campaign ) {
+	echo '</div>';
+}
+add_action( 'atcf_shortcode_submit_field_after_tos', 'atcf_shortcode_submit_field_after_tos', 10, 4 );
+
+function atcf_shortcode_submit_field_label_length( $label ) {
+	if ( atcf_has_preapproval_gateway() )
+		return $label;
+
+	return $label . '<a href="#" class="atcf-toggle-neverending">' . __( 'No End Date', 'atcf' ) . '</a>';
+}
+add_filter( 'atcf_shortcode_submit_field_label_length', 'atcf_shortcode_submit_field_label_length' );
 
 /**
  * Heading
@@ -938,7 +992,7 @@ function atcf_shortcode_submit_field_term_checklist( $key, $field, $atts, $campa
 		require_once( ABSPATH . 'wp-admin/includes/admin.php' );
 	}
 ?>
-	<p class="atcf-submit-campaign-<?php echo esc_attr( $key ); ?>">
+	<div class="atcf-submit-campaign-<?php echo esc_attr( $key ); ?>">
 		<label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_attr( $field[ 'label' ] ); ?></label>
 
 		<ul class="atcf-multi-select">			
@@ -949,7 +1003,7 @@ function atcf_shortcode_submit_field_term_checklist( $key, $field, $atts, $campa
 			) );
 		?>
 	</ul>
-	</p>
+	</div>
 <?php
 }
 
@@ -1166,7 +1220,7 @@ function atcf_shortcode_submit_process() {
 
 		$redirect = apply_filters( 'atcf_submit_campaign_success_redirect', $url );
 		
-		wp_safe_redirect( add_query_arg( 'success', true, $redirect ) );
+		wp_safe_redirect( add_query_arg( array( 'success' => true, 'campaign' => $campaign ), $redirect ) );
 		exit();
 	} else {
 		wp_safe_redirect( add_query_arg( 'preview', 'true', get_permalink( $campaign ) ) );
@@ -1191,7 +1245,7 @@ add_action( 'template_redirect', 'atcf_shortcode_submit_process' );
  * @return void
  */
 function atcf_submit_process_after( $campaign, $postdata, $status, $fields ) {
-	global $edd_options;
+	global $edd_options, $wp_query;
 
 	$submit_campaign = atcf_submit_campaign();
 	

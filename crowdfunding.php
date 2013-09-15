@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      Astoundify
  * Author URI:  http://astoundify.com
- * Version:     1.7
+ * Version:     1.7.2
  * Text Domain: atcf
  */
 
@@ -71,7 +71,7 @@ final class ATCF_CrowdFunding {
 	private function setup_globals() {
 		/** Versions **********************************************************/
 
-		$this->version    = '1.7';
+		$this->version    = '1.7.2';
 		$this->db_version = '1';
 
 		/** Paths *************************************************************/
@@ -164,18 +164,6 @@ final class ATCF_CrowdFunding {
 				add_action( 'admin_notices', array( $this, 'edd_notice' ) );
 			}
 		}
-
-		/** Will remove after a few versions */
-		$theme = wp_get_theme();
-
-		if ( 'fundify' == $theme->Template && version_compare( $theme->Version, '1.5', '<' ) ) {
-			if ( is_plugin_active( $this->basename ) ) {
-				deactivate_plugins( $this->basename );
-				unset( $_GET[ 'activate' ] ); // Ghetto
-
-				add_action( 'admin_notices', array( $this, 'theme_notice' ) );
-			}
-		}
 	}
 
 	/**
@@ -192,21 +180,6 @@ final class ATCF_CrowdFunding {
 						__( '<strong>Notice:</strong> Crowdfunding by Astoundify requires <a href="%s">Easy Digital Downloads</a> in order to function properly.', 'atcf' ), 
 						wp_nonce_url( network_admin_url( 'update.php?action=install-plugin&plugin=easy-digital-downloads' ), 'install-plugin_easy-digital-downloads' )
 				); ?></p>
-		</div>
-<?php
-	}
-
-	/**
-	 * Theme notice.
-	 *
-	 * @since Astoundify Crowdfunding 1.6
-	 *
-	 * @return void
-	 */
-	function theme_notice() {
-?>
-		<div class="updated">
-			<p><?php _e( '<strong>Notice:</strong> Please update your copy of Fundify before updating Crowdfunding by Astoundify', 'atcf' ); ?></p>
 		</div>
 <?php
 	}
@@ -283,6 +256,14 @@ final class ATCF_CrowdFunding {
 		return $template;
 	}
 
+	/**
+	 * Load scripts.
+	 *
+	 * @since Astoundify 1.6
+	 *
+	 * @param mixed $template
+	 * @return string $template The path of the file to include
+	 */
 	public function frontend_scripts() {
 		global $edd_options;
 
@@ -349,15 +330,10 @@ final class ATCF_CrowdFunding {
 		$mofile_global = WP_LANG_DIR . '/' . $this->domain . '/' . $mofile;
 
 		// Look in global /wp-content/languages/atcf folder
-		if ( file_exists( $mofile_global ) ) {
-			return load_plugin_textdomain( $this->domain, false, $mofile_global );
+		load_textdomain( $this->domain, $mofile_global );
 
 		// Look in local /wp-content/plugins/appthemer-crowdfunding/languages/ folder
-		} elseif ( file_exists( $mofile_local ) ) {
-			return load_plugin_textdomain( $this->domain, false, $mofile_local );
-		}
-
-		return false;
+		load_textdomain( $this->domain, $mofile_local );
 	}
 }
 

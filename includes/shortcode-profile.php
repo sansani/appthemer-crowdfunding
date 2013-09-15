@@ -219,7 +219,8 @@ function atcf_shortcode_profile_contributions( $user ) {
 	global $edd_options;
 
 	$contributions = edd_get_payments( array(
-		'user' => $user->ID
+		'user'   => $user->ID,
+		'status' => atcf_has_preapproval_gateway() ? array( 'preapproval', 'publish' ) : 'publish'
 	) );
 
 	if ( empty( $contributions ) )
@@ -234,11 +235,13 @@ function atcf_shortcode_profile_contributions( $user ) {
 			$cart         = edd_get_payment_meta_cart_details( $contribution->ID );
 			$key          = edd_get_payment_key( $contribution->ID );
 		?>
+		<?php if ( $cart ) : ?>
 		<li>
-			<?php if ( $cart ) : foreach ( $cart as $download ) : ?>
+			<?php foreach ( $cart as $download ) : ?>
 			<?php printf( _x( '<a href="%s">%s</a> pledge to <a href="%s">%s</a>', 'price for download (payment history)', 'atcf' ), add_query_arg( 'payment_key', $key, get_permalink( $edd_options[ 'success_page' ] ) ), edd_currency_filter( edd_format_amount( $download[ 'price' ] ) ), get_permalink( $download[ 'id' ] ), $download[ 'name' ] ); ?>
-			<?php endforeach; endif; ?>
+			<?php endforeach; ?>
 		</li>
+		<?php endif; ?>
 		<?php endforeach; ?>
 	</ul>
 <?php
@@ -397,7 +400,7 @@ function atcf_shortcode_profile_request_data() {
 
 	if ( 0 != $campaign->ID ) {
 		require_once EDD_PLUGIN_DIR . 'includes/admin/reporting/class-export.php';
-		require( $crowdfunding->includes_dir . 'export-campaigns.php' );
+		require( $crowdfunding->includes_dir . 'class-export-campaigns.php' );
 
 		$campaign_export = new ATCF_Campaign_Export( $campaign->ID );
 
