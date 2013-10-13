@@ -5,7 +5,7 @@
  * Description: A crowd funding platform in the likes of Kickstarter and Indigogo
  * Author:      Astoundify
  * Author URI:  http://astoundify.com
- * Version:     1.7.2
+ * Version:     1.7.3
  * Text Domain: atcf
  */
 
@@ -71,7 +71,7 @@ final class ATCF_CrowdFunding {
 	private function setup_globals() {
 		/** Versions **********************************************************/
 
-		$this->version    = '1.7.2';
+		$this->version    = '1.7.3';
 		$this->db_version = '1';
 
 		/** Paths *************************************************************/
@@ -103,6 +103,9 @@ final class ATCF_CrowdFunding {
 	 * @return void
 	 */
 	private function includes() {
+		if ( ! class_exists( 'Easy_Digital_Downloads' ) )
+			return;
+
 		require( $this->includes_dir . 'class-install.php' );
 		require( $this->includes_dir . 'class-campaigns.php' );
 		require( $this->includes_dir . 'class-campaign.php' );
@@ -137,6 +140,10 @@ final class ATCF_CrowdFunding {
 	 */
 	private function setup_actions() {
 		add_action( 'init', array( $this, 'is_edd_activated' ), 1 );
+
+		if ( ! class_exists( 'Easy_Digital_Downloads' ) )
+			return;
+
 		add_action( 'wp_enqueue_scripts', array( $this, 'frontend_scripts' ) );
 		add_filter( 'template_include', array( $this, 'template_loader' ) );
 
@@ -353,5 +360,4 @@ final class ATCF_CrowdFunding {
 function crowdfunding() {
 	return ATCF_CrowdFunding::instance();
 }
-
-crowdfunding();
+add_action( 'plugins_loaded', 'crowdfunding' );

@@ -192,12 +192,14 @@ class ATCF_Campaign {
 	public function backers( $unique = false ) {
 		global $edd_logs;
 
-		$backers = $edd_logs->get_connected_logs( array(
-			'post_parent'    => $this->ID, 
-			'log_type'       => atcf_has_preapproval_gateway() ? 'preapproval' : 'sale',
-			'post_status'    => array( 'publish' ),
-			'posts_per_page' => -1
-		) );
+		$backers_args = apply_filters( 'atcf_campaign_backers_args', array(
+	       'post_parent'    => $this->ID, 
+	       'log_type'       => atcf_has_preapproval_gateway() ? 'preapproval' : 'sale',
+	       'post_status'    => array( 'publish' ),
+	       'posts_per_page' => -1
+	     ) );
+		 
+		$backers = $edd_logs->get_connected_logs( $backers_args );
 
 		if ( ! $backers )
 			return array();
@@ -288,7 +290,7 @@ class ATCF_Campaign {
 	 * @return int The number of days remaining
 	 */
 	public function days_remaining() {
-		_deprecated_function( __FUNCTION__, '1.7.2', 'time_remaining()' );
+		//_deprecated_function( __FUNCTION__, '1.7.2', 'time_remaining()' );
 
 		return $this->time_remaining( 'days' );
 	}
@@ -303,7 +305,7 @@ class ATCF_Campaign {
 	 * @return int The hours remaining
 	 */
 	public function hours_remaining() {
-		_deprecated_function( __FUNCTION__, '1.7.2', 'time_remaining()' );
+		//_deprecated_function( __FUNCTION__, '1.7.2', 'time_remaining()' );
 
 		return $this->time_remaining( 'hours' );
 	}
