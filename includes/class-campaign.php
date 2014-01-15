@@ -197,7 +197,7 @@ class ATCF_Campaign {
 	       'log_type'       => atcf_has_preapproval_gateway() ? 'preapproval' : 'sale',
 	       'post_status'    => array( 'publish' ),
 	       'posts_per_page' => -1
-	     ) );
+	    ) );
 		 
 		$backers = $edd_logs->get_connected_logs( $backers_args );
 
@@ -275,7 +275,7 @@ class ATCF_Campaign {
 			break;
 		}
 
-		$remaining = floor( $off );
+		$remaining = ceil( $off );
 
 		return apply_filters( 'atcf_campaign_time_remainig', $remaining, $this );
 	}
